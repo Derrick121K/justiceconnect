@@ -1,0 +1,30 @@
+begin;
+insert into public.practice_areas(slug,name,description,sort_order) values
+('criminal-law','Criminal Law','Criminal defence, bail applications and criminal proceedings.',1),
+('family-law','Family Law','Divorce, maintenance, parental responsibilities and care disputes.',2),
+('labour-law','Labour & Employment','Employment disputes, dismissals, CCMA and workplace matters.',3),
+('civil-litigation','Civil Litigation','Civil claims, contractual disputes and court proceedings.',4),
+('property-law','Property Law & Conveyancing','Property transactions, transfers, evictions and property disputes.',5),
+('commercial-law','Commercial Law','Commercial contracts, business disputes and transactions.',6),
+('corporate-law','Corporate Law','Company law, governance, restructuring and compliance.',7),
+('personal-injury','Personal Injury','Personal injury and damages claims.',8),
+('medical-negligence','Medical Negligence','Claims arising from alleged medical negligence.',9),
+('immigration-law','Immigration Law','Visas, permits, residency and immigration appeals.',10),
+('wills-estates','Wills & Estates','Wills, trusts, deceased estates and estate administration.',11),
+('debt-insolvency','Debt & Insolvency','Debt recovery, insolvency and sequestration matters.',12),
+('constitutional-law','Constitutional Law','Constitutional rights and constitutional litigation.',13),
+('administrative-law','Administrative Law','Judicial review and challenges to administrative decisions.',14),
+('intellectual-property','Intellectual Property','Trade marks, copyright, patents and IP disputes.',15),
+('tax-law','Tax Law','Tax disputes, tax administration and compliance.',16),
+('environmental-law','Environmental Law','Environmental regulation, permits and disputes.',17),
+('construction-law','Construction Law','Construction contracts, project disputes and adjudication.',18),
+('consumer-law','Consumer Law','Consumer rights, complaints and product or service disputes.',19),
+('insurance-law','Insurance Law','Insurance claims, repudiations and policy disputes.',20),
+('conveyancing','Conveyancing','Property transfers and related conveyancing services.',21),
+('notarial-services','Notarial Services','Notarial authentication, antenuptial contracts and related services.',22),
+('mediation-arbitration','Mediation & Arbitration','Alternative dispute resolution and arbitration.',23),
+('competition-law','Competition Law','Competition regulation, merger control and related disputes.',24),
+('mining-law','Mining Law','Mining rights, mineral regulation and related disputes.',25),
+('public-procurement','Public Procurement','Tender, procurement and public-sector contracting matters.',26)
+on conflict(slug) do nothing;
+commit;

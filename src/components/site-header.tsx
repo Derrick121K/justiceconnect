@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { Scale, ArrowRight } from "lucide-react";
+export function SiteHeader() { return <header className="site-header wrap"><Link href="/" className="brand"><span className="brand-mark"><Scale size={21}/></span><span>Justice<span>Connect</span><small> SOUTH AFRICA</small></span></Link><nav><Link href="/lawyers">Find a lawyer</Link><Link href="/firms">Law firms</Link><Link href="/practice-areas">Practice areas</Link></nav><div className="site-header-actions"><Link href="/login">Sign in</Link><Link className="btn btn-gold btn-small" href="/register">Get started <ArrowRight size={14}/></Link></div></header>; }

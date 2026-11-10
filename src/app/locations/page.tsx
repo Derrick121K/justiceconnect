@@ -1,0 +1,4 @@
+import Link from "next/link";
+import { SiteHeader } from "@/components/site-header";
+const provinces=["Eastern Cape","Free State","Gauteng","KwaZulu-Natal","Limpopo","Mpumalanga","North West","Northern Cape","Western Cape"];
+export default function Locations(){return <main className="directory-page"><SiteHeader/><section className="directory-hero"><div className="wrap"><div className="eyebrow">NATIONWIDE LEGAL DISCOVERY</div><h1>Across all <em>nine provinces.</em></h1><p>Browse legal services by province. Municipality and settlement coverage is populated progressively from authoritative geographic datasets.</p></div></section><section className="wrap directory-results"><div className="province-grid">{provinces.map((p,i)=><Link href={`/lawyers?location=${encodeURIComponent(p)}`} key={p}><span>0{i+1}</span>{p}<b>→</b></Link>)}</div></section></main>}
