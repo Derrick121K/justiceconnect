@@ -16,3 +16,9 @@ test-results/
 .vercel/
 *.pem
 *.key
+
+# Generated build metadata
+*.tsbuildinfo
+
+# Local audit exports
+npm-audit.json

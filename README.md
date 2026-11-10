@@ -105,7 +105,17 @@ npm run build
 npm run import:places
 ```
 
-The package installation could not be completed in the authoring environment because npm registry requests failed with DNS/network timeouts. Therefore no lockfile is included and typecheck, lint, Vitest and production build must be run after dependency installation in a network-enabled environment. Do not treat static checks as a substitute for those commands.
+A `package-lock.json` is committed. Use `npm ci` for reproducible dependency installation.
+
+Local verification completed successfully on the maintainer's Windows development environment:
+
+- Vitest: 13 tests passed.
+- TypeScript: passed.
+- ESLint: passed with zero errors.
+- Next.js 16.4.6 production build: passed.
+- npm security audit: zero reported vulnerabilities.
+
+These results do not replace Supabase integration testing, database RLS testing, end-to-end testing or independent security review. JusticeConnect must complete those checks before accepting real client matters.
 
 ## Security and privacy model
 
