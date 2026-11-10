@@ -138,3 +138,27 @@ JMSE KAPA HOLDINGS (PTY) LTD should obtain South African legal advice on the pla
 ## Project ownership
 
 JusticeConnect is a product of JMSE KAPA HOLDINGS (PTY) LTD. The platform must not imply endorsement by the Legal Practice Council, courts, government or any law firm unless expressly authorised.
+
+## Supabase migration ledger
+
+The following files match the migration versions recorded in the JusticeConnect Supabase project. These migrations have already been applied to that project; do not reapply them there.
+
+<!-- JUSTICECONNECT_SUPABASE_MIGRATIONS_START -->
+- `20261110195704_initial_platform.sql`
+- `20261110195725_practice_area_seed.sql`
+- `20261110195740_onboarding_and_matching_rpc.sql`
+- `20261110195748_privilege_hardening.sql`
+- `20261110195757_consent_based_submission.sql`
+- `20261110195805_owner_scoped_workspace_writes.sql`
+- `20261110195814_identity_and_organisation_bootstrap.sql`
+- `20261110195823_private_case_disclosure_workflow.sql`
+- `20261110195831_national_place_import_support.sql`
+- `20261110195840_compliance_review_workflows.sql`
+- `20261110195848_consultation_lifecycle.sql`
+- `20261110195856_firm_team_invitations.sql`
+- `20261110195905_atomic_practitioner_coverage.sql`
+- `20261110195913_role_helper_execute_hardening.sql`
+- `20261110195922_expired_credential_visibility_guard.sql`
+- `20261110195939_rls_cycle_and_document_metadata_hardening.sql`
+- `20261110200109_security_definer_helpers_and_rpc_hardening.sql`
+<!-- JUSTICECONNECT_SUPABASE_MIGRATIONS_END -->
