@@ -137,7 +137,7 @@ JusticeConnect is a product of JMSE KAPA HOLDINGS (PTY) LTD. The platform must n
 
 ## Supabase migration ledger
 
-The following files match the migration versions recorded in the JusticeConnect Supabase project. The 22 entries in this ledger are already applied to that project; do not reapply them there.
+The following files match the migration versions recorded in the JusticeConnect Supabase project. All 24 entries in this ledger are already applied to that project; do not reapply them there.
 
 <!-- JUSTICECONNECT_SUPABASE_MIGRATIONS_START -->
 - `20261110195704_initial_platform.sql`
@@ -162,9 +162,7 @@ The following files match the migration versions recorded in the JusticeConnect 
 - `20261127123216_citext_and_postgis_function_privilege_hardening.sql`
 - `20261127172902_ffc_credential_review_and_expiry_rules.sql`
 - `20261127173151_south_africa_credential_expiry_timezone.sql`
+- `20261127183352_jcstudio_and_connected_products.sql`
+- `20261127183511_jcstudio_trigger_acl_hardening.sql`
 
 <!-- JUSTICECONNECT_SUPABASE_MIGRATIONS_END -->
-
-### Proposed next migration
-
-- `20261127190000_jcstudio_and_connected_products.sql` — JCStudio internal practice schema, access helpers, accepted-mandate conversion and product-suite support. This file is **not yet recorded as applied** in the live JusticeConnect migration ledger.

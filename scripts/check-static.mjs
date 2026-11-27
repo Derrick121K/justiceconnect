@@ -30,7 +30,8 @@ const required = [
   "desktop/package.json",
   "docs/CONNECTED_PRODUCT_ARCHITECTURE.md",
   "tests/connected-suite-security.test.ts",
-  "supabase/migrations/20261127190000_jcstudio_and_connected_products.sql",
+  "supabase/migrations/20261127183352_jcstudio_and_connected_products.sql",
+  "supabase/migrations/20261127183511_jcstudio_trigger_acl_hardening.sql",
   "src/lib/supabase/server.ts",
   "src/lib/form-data.ts",
   "proxy.ts",
@@ -184,7 +185,7 @@ if (
 }
 
 const jcstudioMigration = await readFile(
-  path.join(root, "supabase/migrations/20261127190000_jcstudio_and_connected_products.sql"),
+  path.join(root, "supabase/migrations/20261127183352_jcstudio_and_connected_products.sql"),
   "utf8",
 );
 for (const invariant of [
@@ -194,6 +195,7 @@ for (const invariant of [
   "studio members read internal notes",
   "studio billing roles read invoices",
   "firm_members_revoke_practice_access",
+  "revoke all on function private.guard_practice_matter_update() from public, anon, authenticated;",
   "law_firms_revoke_practice_access",
   "grant select on public.practice_matters to authenticated;",
   "account.status = 'active'",

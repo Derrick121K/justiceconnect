@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
 
 const migration = readFile(
-  new URL("../supabase/migrations/20261127190000_jcstudio_and_connected_products.sql", import.meta.url),
+  new URL("../supabase/migrations/20261127183352_jcstudio_and_connected_products.sql", import.meta.url),
+  "utf8",
+);
+const aclMigration = readFile(
+  new URL("../supabase/migrations/20261127183511_jcstudio_trigger_acl_hardening.sql", import.meta.url),
   "utf8",
 );
 const serviceWorker = readFile(new URL("../public/sw.js", import.meta.url), "utf8");
@@ -50,6 +54,11 @@ describe("connected legal suite security boundaries", () => {
     expect(sql).toContain("private.audit_practice_change");
     expect(sql).toContain("'jcstudio.' || tg_table_name");
     expect(sql).toContain("jsonb_build_object('module','jcstudio','record_id',record_id)");
+  });
+
+  it("revokes public execute access from trigger-only helpers", async () => {
+    const sql = await aclMigration;
+    expect(sql).toContain("revoke all on function private.guard_practice_matter_update() from public, anon, authenticated;");
   });
 
   it("keeps authenticated pages out of the offline cache", async () => {
