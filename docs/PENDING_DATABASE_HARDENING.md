@@ -2,7 +2,7 @@
 
 ## Execution status
 
-**Not applied.** The JusticeConnect Supabase project restore was accepted, but the project still reports `COMING_UP`. No database query, migration or advisor run has been performed since restoration. Repository checks are not live database verification.
+**Partially applied / not yet remediated.** The JusticeConnect Supabase project now reports `ACTIVE_HEALTHY`. The 17 existing migrations were confirmed against the live migration ledger. Live advisor and catalog inspection has been performed. No database schema changes have yet been made from the hardening branch. Repository checks are not live database verification.
 
 A Supabase development branch was quoted at **US$0.01344 per hour**. It is the preferred isolated test target. Do not create the metered branch until the project owner explicitly approves this recurring cost. Do not use production to iterate on schema changes.
 
@@ -13,6 +13,26 @@ Migration `20261110195922_expired_credential_visibility_guard.sql` already check
 Migration `20261110195939_rls_cycle_and_document_metadata_hardening.sql` adds `private.has_current_practitioner_credential(uuid)` and uses it in public visibility policies.
 
 The remaining work is to use this private helper consistently inside transactional workflows, re-check that practitioner accounts are active at the point of use, require complete encrypted credential evidence before approval, and close a race in consultation conflict checking.
+
+## Confirmed live tenant-isolation defect — priority 0
+
+The live `pg_catalog.pg_policies` definitions show that four firm workspace policies are incorrectly scoped because their SQL uses unqualified column names inside a `firm_members fm` subquery:
+
+- `firm admins create branches`
+- `firm admins update branches`
+- `firm admins delete branches`
+- `firm admins update descriptive profile`
+
+The branch policies currently contain the tautology `fm.firm_id = fm.firm_id`. The firm profile policy compares `fm.firm_id = fm.id`, which incorrectly blocks legitimate administration. The branch predicate can allow an administrator of one firm to mutate branches belonging to another firm.
+
+A reviewed, tenant-qualified correction is prepared at `supabase/patches/firm_workspace_rls_scope_hardening.sql`. After applying it, run `supabase/verification/firm_workspace_rls_policy_check.sql` and a two-firm/two-admin adversarial test before enabling firm workspace write operations.
+
+## Other live advisor findings
+
+- `public.spatial_ref_sys` is PostGIS's system reference table. Do not attempt to enable RLS or drop it. PostGIS 3.3.7 is installed in `public` and is not relocatable on this instance; use the Supabase Support-assisted relocation route after a backup, rather than a `DROP EXTENSION ... CASCADE` rebuild.
+- Three PostGIS `st_estimatedextent` overloads are executable by `anon`; review this with Supabase Support as part of the PostGIS relocation. The other authenticated `SECURITY DEFINER` RPCs have intentional execute grants and require their internal authorization checks.
+- `fidelity_fund_certificates` has RLS enabled but no policies. It is currently fail-closed; do not add read access until a product workflow and tenant/owner policy are defined.
+- Performance advisor reports RLS init-plan warnings, missing FK indexes, unused indexes (expected on a new empty database), and multiple permissive policies. Address these in a separately tested optimization pass; do not drop planned spatial/search indexes based on empty-database statistics.
 
 ## Required migration work
 
@@ -39,7 +59,7 @@ Implement and review:
 - Approve the quoted development-branch cost, create that branch and test only there.
 - Run Supabase security, performance and health advisors; resolve or document every finding.
 - Test anonymous users, multiple clients/practitioners, expired/rejected credentials, inactive/suspended profiles, separate firms, compliance and super-admin roles.
-- Test IDOR/BOLA UUID substitution for matters, practitioners, disclosures, consultations and firms.
+- Test IDOR/BOLA UUID substitution for matters, practitioners, disclosures, consultations, firms and branch records. Verify that an administrator of Firm A cannot create, edit or delete a branch under Firm B, and cannot edit Firm B's profile.
 - Test disclosure revocation, matter closure, repeated acceptance and concurrent consultation requests.
 - Verify audit events, migration history and recovery strategy before production promotion.
 
