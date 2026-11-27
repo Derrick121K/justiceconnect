@@ -64,25 +64,9 @@ Keep `.env.local`, all encryption keys and service-role credentials out of Git. 
 
 Create a new, dedicated Supabase project for JusticeConnect. Do not reuse the database of another JMSE application.
 
-Apply migrations in numeric order:
+Apply the timestamped SQL files in `supabase/migrations/` in ascending filename order, exactly once, against a dedicated JusticeConnect database. The repository currently contains 22 timestamped migrations. For an existing project, inspect `supabase migration list` and the Supabase migration ledger first; do not replay migrations already recorded as applied. The ledger below records the 22 migrations applied to the existing JusticeConnect project. A fresh database must receive the complete ordered migration set, followed by a separate validation pass.
 
-1. `0001_initial_platform.sql`
-2. `0002_practice_area_seed.sql`
-3. `0003_onboarding_and_matching_rpc.sql`
-4. `0004_privilege_hardening.sql`
-5. `0005_consent_based_submission.sql`
-6. `0006_owner_scoped_workspace_writes.sql`
-7. `0007_identity_and_organisation_bootstrap.sql`
-8. `0008_private_case_disclosure_workflow.sql`
-9. `0009_national_place_import_support.sql`
-10. `0010_compliance_review_workflows.sql`
-11. `0011_consultation_lifecycle.sql`
-12. `0012_firm_team_invitations.sql`
-13. `0013_atomic_practitioner_coverage.sql`
-14. `0014_role_helper_execute_hardening.sql`
-15. `0015_expired_credential_visibility_guard.sql`
-
-For a linked project, install the Supabase CLI, run `supabase login`, `supabase link --project-ref YOUR_PROJECT_REF`, inspect the pending migration list, then run `supabase db push`. Alternatively apply the SQL files in order through the SQL editor. Confirm the target project before either route. After migrations, execute `supabase/bootstrap_admin.sql` in the SQL editor after replacing the placeholder with the confirmed owner's account email. This grants the first `super_admin` role. Treat that SQL as privileged break-glass setup and do not expose it in a public route.
+For a linked project, install the Supabase CLI, run `supabase login`, `supabase link --project-ref YOUR_PROJECT_REF`, inspect the pending migration list, then inspect the pending migration plan and run `supabase db push` only after confirming the linked project reference, reviewing the migration diff, and ensuring a recoverable backup exists. Do not apply migrations to production from an unreviewed local checkout. After migrations, execute `supabase/bootstrap_admin.sql` in the SQL editor after replacing the placeholder with the confirmed owner's account email. This grants the first `super_admin` role. Treat that SQL as privileged break-glass setup and do not expose it in a public route.
 
 ### National place import
 
@@ -107,7 +91,7 @@ npm run import:places
 
 A `package-lock.json` is committed. Use `npm ci` for reproducible dependency installation.
 
-Local verification completed successfully on the maintainer's Windows development environment:
+Historical baseline verification completed successfully on the maintainer's Windows development environment before the current production-readiness branch changes:
 
 - Vitest: 13 tests passed.
 - TypeScript: passed.
@@ -115,7 +99,7 @@ Local verification completed successfully on the maintainer's Windows developmen
 - Next.js 16.4.6 production build: passed.
 - npm security audit: zero reported vulnerabilities.
 
-These results do not replace Supabase integration testing, database RLS testing, end-to-end testing or independent security review. JusticeConnect must complete those checks before accepting real client matters.
+These historical results do not verify the changes on the current production-readiness branch. The branch CI workflow must rerun all checks and report success before merge. Historical checks also do not replace Supabase integration testing, database RLS testing, end-to-end testing or independent security review. JusticeConnect must complete those checks before accepting real client matters.
 
 ## Security and privacy model
 
@@ -161,4 +145,10 @@ The following files match the migration versions recorded in the JusticeConnect 
 - `20261110195922_expired_credential_visibility_guard.sql`
 - `20261110195939_rls_cycle_and_document_metadata_hardening.sql`
 - `20261110200109_security_definer_helpers_and_rpc_hardening.sql`
+- `20261127122425_firm_workspace_rls_scope_hardening.sql`
+- `20261127122930_practitioner_eligibility_and_consultation_lock.sql`
+- `20261127123216_citext_and_postgis_function_privilege_hardening.sql`
+- `20261127172902_ffc_credential_review_and_expiry_rules.sql`
+- `20261127173151_south_africa_credential_expiry_timezone.sql`
+
 <!-- JUSTICECONNECT_SUPABASE_MIGRATIONS_END -->

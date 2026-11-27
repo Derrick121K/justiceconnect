@@ -1,61 +1,52 @@
-# Pending database hardening — 2026-11-27
+# Remaining database and production hardening — 2026-11-27
 
-## Execution status
+## Live database status
 
-**Not applied.** The linked JusticeConnect Supabase project was restored successfully, but its current status is still `COMING_UP`. No database query, migration or advisor run has been performed after restoration. Do not interpret the repository checks as live database verification.
+The dedicated JusticeConnect Supabase project reports `ACTIVE_HEALTHY`. The live migration ledger contains **22 migrations**, including the five additional migrations applied during the production-readiness work:
 
-A Supabase development branch was quoted at **US$0.01344 per hour**. Do not create it until the project owner approves this recurring cost. The development branch is the intended test target; do not use the production database for migration iteration.
+- `20261127122425_firm_workspace_rls_scope_hardening`
+- `20261127122930_practitioner_eligibility_and_consultation_lock`
+- `20261127123216_citext_and_postgis_function_privilege_hardening`
+- `20261127172902_ffc_credential_review_and_expiry_rules`
+- `20261127173151_south_africa_credential_expiry_timezone`
 
-## Existing controls confirmed in repository migrations
+The README migration ledger matches the live ledger. Do not replay migrations already recorded as applied.
 
-The migration `20261110195922_expired_credential_visibility_guard.sql` already checks for a current, verified qualifying credential in these workflows:
+## Database hardening confirmed as applied
 
-- `public.find_matter_practitioner_candidates`
-- `public.share_matter_with_practitioner`
-- `public.practitioner_express_interest`
-- `public.client_accept_practitioner_interest`
-- `public.request_consultation`
+1. **Firm tenant isolation.** Firm profile and branch administrator policies bind membership checks to the outer `law_firms.id` and `firm_branches.firm_id` rows. A rollback-only two-firm adversarial test confirmed that Firm A cannot insert, update or delete Firm B's branches or update Firm B's profile, while Firm A can update its own records. All temporary test fixtures were rolled back and follow-up counts confirmed no fixtures remained.
 
-The same migration applies current-credential filtering to public practitioner, practice-area and service-area visibility. Migration `20261110195939_rls_cycle_and_document_metadata_hardening.sql` later introduces `private.has_current_practitioner_credential(uuid)` and uses it in public visibility policies.
+2. **Practitioner eligibility.** Candidate matching, matter disclosure, practitioner interest, client acceptance and consultation requests check the private current-credential helper and require an active practitioner account at the point of use. Practitioner profile and credential self-approval are rejected.
 
-Therefore, the issue is **not that all current-credential checks are absent**. The remaining improvement is to consolidate transactional eligibility checks on the private helper, also require an active profile status at each privileged workflow boundary, and prove that suspended/inactive profiles cannot continue in a workflow that was previously opened.
+3. **Credential evidence.** Credential verification requires encrypted registration data and an issuing body, and rejects expired credentials. The latest review migration separately permits an LPC-issued Fidelity Fund Certificate (FFC) to be reviewed when the encrypted certificate number and current annual expiry date are supplied.
 
-## Required database migration work
+4. **FFC is not admission.** The private practitioner-eligibility helper intentionally continues to require a current qualifying LPC registration, candidate registration or admission/enrolment record. An FFC is an additional, distinct certificate for the practices that require it; it does not alone establish admission/enrolment or enable public practitioner discovery.
 
-Generate the migration with the Supabase CLI after the project is healthy and a development branch is approved:
+5. **South African expiry date.** The eligibility helper and credential review RPC use `Africa/Johannesburg` calendar dates, matching the application's server-side expiry validation.
 
-```bash
-supabase migration new eligibility_and_consultation_concurrency_hardening
-```
+5. **Consultation race protection.** Consultation requests acquire a transaction-scoped advisory lock for the practitioner before overlap checks and insert, preventing concurrent requests from both passing the same availability check.
 
-Implement and review:
+6. **Extension placement.** The relocatable `citext` extension has been moved into the `extensions` schema.
 
-1. **Centralized, current eligibility checks.** Update all five workflows above to use `private.has_current_practitioner_credential(p.id)` and require `public.profiles.status = 'active'` for the practitioner at the point of use. Preserve client ownership, explicit matter-consent, active disclosure, profile visibility, verified practitioner status, matching expertise and existing service-area requirements. For client acceptance, also re-check the matter remains open/eligible and the disclosure remains active.
+## Remaining PostGIS advisor finding
 
-2. **Credential review integrity.** When a compliance officer chooses `verified`, require a non-empty encrypted registration value, a non-empty issuing body, a supported registration/admission credential type, and a non-expired date. Keep the existing compliance/super-admin authorization and prohibit self-verification. Never log or audit plaintext credential numbers.
+- PostGIS 3.3.7 remains installed in `public` and is not relocatable by ordinary SQL on this instance. The `public.spatial_ref_sys` advisor error concerns the PostGIS system reference table; do not enable RLS on it, drop the extension or run `DROP EXTENSION ... CASCADE`.
+- The attempted permission restriction on three `st_estimatedextent` overloads did not change their live ACLs. They remain executable by `anon` and `authenticated`. Do not mark this as fixed.
+- Ask Supabase Support for the supported PostGIS schema/ACL remediation path. Complete a recoverable backup first and obtain a written change plan. Re-run the security advisor and inspect the exact function ACLs afterwards.
 
-3. **Concurrency-safe consultation requests.** The current consultation flow performs a read-then-insert availability check, which can permit two overlapping requests to race. Acquire a transaction-scoped advisory lock keyed to the practitioner before checking for overlap, then perform the overlap check and insert in the same transaction. Keep the fixed 45-minute duration unless product policy explicitly changes. Add an integration test with concurrent callers demonstrating that only one overlapping request can be created.
+## Remaining verification and release gates
 
-4. **Least privilege and auditability.** Keep privileged functions schema-qualified with `SET search_path = ''`, validate `auth.uid()` in each exposed privileged workflow, revoke default execution from `PUBLIC` and `anon`, and grant only the intended role. Add audit events for state changes without copying confidential case content or credential data into metadata.
+- Add automated multi-user RLS tests for read and write paths across matters, disclosures, conversations, firm members, invitations, branches and subscriptions. The two-firm branch/profile mutation paths have passed; that is not proof that every table is safe.
+- Add a concurrent integration test that creates overlapping consultation requests against a disposable database and proves only one request succeeds.
+- Test expired, rejected, suspended, revoked and renewed credential states, including separate admission/LPC registration and FFC evidence.
+- Verify that credential replacement does not change historical records, that a verified FFC alone does not enable practitioner discovery, and that expired credentials are excluded immediately.
+- Run Supabase security, performance and health advisors after PostGIS remediation. Review RLS init-plan warnings, foreign-key indexes and multiple permissive policies; do not drop unused indexes solely because the new database has low row counts.
+- Complete independent penetration testing and a dedicated RLS adversarial review.
+- Implement rate limits and abuse detection for registration, enquiries, messages and invitations.
+- Implement private evidence storage with per-matter authorization, content validation, malware scanning and short-lived signed downloads before enabling document upload.
+- Complete backup/restore drills, monitoring, incident response and credential-encryption key rotation.
+- Complete the POPIA impact assessment, retention/deletion processes, operator agreements and South African legal/professional-conduct review.
 
-## Required verification before promotion
+## Safe operational rule
 
-- Wait until the dedicated JusticeConnect project reports `ACTIVE_HEALTHY`.
-- Inspect the actual Supabase migration ledger before creating or applying migrations; never replay migrations already applied.
-- Obtain approval for the quoted development-branch cost, create the development branch and apply/test only there.
-- Run Supabase security, performance and health advisors; resolve findings or document accepted exceptions.
-- Test anonymous access, two clients, multiple practitioners, expired/rejected credentials, suspended/inactive profiles, separate firms, compliance and super-admin roles.
-- Attempt IDOR/BOLA access by substituting matter, practitioner, disclosure, consultation and firm UUIDs.
-- Test disclosure revocation, matter closure, repeated acceptance, credential expiry and concurrent consultation requests.
-- Verify that privileged state changes create expected audit events.
-- Review the generated migration diff and prove rollback/recovery before production promotion.
-
-## Separate application and operational gates
-
-- Rate limits and abuse detection for registration, enquiries, messages and invitations.
-- Private evidence storage with per-matter authorization, MIME/content validation, malware scanning and short-lived signed downloads. The current application has no enabled upload/scanning flow.
-- Independent RLS adversarial testing and penetration testing.
-- Backup/restore exercises, monitoring, incident response and encryption-key rotation.
-- POPIA privacy-impact assessment, retention/deletion processes, operator agreements, and South African legal/professional-conduct review.
-
-**Release rule:** do not accept real legal matters or represent JusticeConnect as production-secure until database, independent security and operational gates are complete.
+Continue testing with non-sensitive accounts and fictional matter details. Do not submit real confidential legal matters, expose unverified practitioners in public search, or describe JusticeConnect as production-secure until the PostGIS, independent security, privacy and operational release gates are complete.
