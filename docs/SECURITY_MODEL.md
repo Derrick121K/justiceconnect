@@ -44,11 +44,11 @@ Account identity, practitioner registration numbers, client matter summaries, co
 
 ## Database hardening still required
 
-The checked-in migrations include a private current-credential helper used by public practitioner discovery. It must also be enforced by every workflow that creates or consumes practitioner opportunities: candidate matching, client disclosure, practitioner interest, client acceptance and consultation requests. Credential review must reject records without encrypted registration data, and status/expiry changes must immediately remove practitioners from all public and transactional eligibility paths.
+The repository migration `20261110195922_expired_credential_visibility_guard.sql` already checks for a current qualifying credential in candidate matching, disclosure, practitioner interest, client acceptance, consultation requests and public practitioner visibility. Migration `20261110195939_rls_cycle_and_document_metadata_hardening.sql` adds a private current-credential helper used by visibility policies. Remaining database work is to use that helper consistently within transactional workflows, re-check active practitioner account status at the point of use, require complete encrypted credential evidence before approval, and test expiry/suspension edge cases.
 
-Consultation conflict checks must be made concurrency-safe. The current read-then-insert check can race when two requests are submitted at nearly the same time. Use a per-practitioner transaction lock or a tested exclusion constraint, then prove the behaviour with concurrent integration tests.
+Consultation conflict checks currently use a read-then-insert availability check. Concurrent requests may both pass before either insert commits. Add a transaction-scoped lock keyed to the practitioner and prove the fix with concurrent integration tests.
 
-These are database migration tasks, not application-only fixes. The linked JusticeConnect Supabase project was reported as `INACTIVE` on 2026-11-27. No live schema change has been run from this branch. Track the required work in [PENDING_DATABASE_HARDENING.md](./PENDING_DATABASE_HARDENING.md), restore/verify the dedicated project, generate a migration with the Supabase CLI, test on a disposable database or Supabase development branch, and run security/performance advisors before promoting it.
+The JusticeConnect Supabase project restore was accepted but the project was still reporting `COMING_UP` on 2026-11-27. No live schema change has been run from this branch. A Supabase development branch was quoted at US$0.01344 per hour and requires explicit owner approval before creation. Track the database work in [PENDING_DATABASE_HARDENING.md](./PENDING_DATABASE_HARDENING.md), inspect migration history after the project is healthy, test only on the approved development branch, and run security/performance advisors before production promotion.
 
 ## Important launch blockers
 
