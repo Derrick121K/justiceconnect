@@ -16,7 +16,7 @@ const required = [
   "supabase/migrations/20261127122425_firm_workspace_rls_scope_hardening.sql",
   "supabase/migrations/20261127122930_practitioner_eligibility_and_consultation_lock.sql",
   "supabase/migrations/20261127123216_citext_and_postgis_function_privilege_hardening.sql",
-  "supabase/migrations/20261127124500_ffc_credential_review_and_expiry_rules.sql",
+  "supabase/migrations/20261127172902_ffc_credential_review_and_expiry_rules.sql",
   "tests/firm-policy-regression.test.ts",
   "tests/practitioner-eligibility-regression.test.ts",
   "tests/ffc-credential-review.test.ts",
