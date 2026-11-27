@@ -11,6 +11,7 @@ const desktopMain = readFile(new URL("../desktop/main.cjs", import.meta.url), "u
 describe("connected legal suite security boundaries", () => {
   it("enables row-level security for every JCStudio data table", async () => {
     const sql = (await migration).toLowerCase();
+    expect((sql.match(/\\$\\$/g) ?? []).length).toBe(18);
     for (const table of [
       "practice_matters", "practice_matter_members", "practice_matter_notes",
       "practice_tasks", "practice_events", "practice_time_entries",

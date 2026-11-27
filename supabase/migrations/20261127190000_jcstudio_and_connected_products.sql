@@ -154,7 +154,7 @@ create index practice_invoice_items_invoice_idx on public.practice_invoice_items
 
 create or replace function private.can_access_practice_matter(target_matter uuid)
 returns boolean language sql stable security definer set search_path = ''
-as $$
+as $$$
   select auth.uid() is not null
     and exists (select 1 from public.profiles account where account.id = auth.uid() and account.status = 'active')
     and exists (
@@ -178,7 +178,7 @@ $$;
 
 create or replace function private.can_edit_practice_matter(target_matter uuid)
 returns boolean language sql stable security definer set search_path = ''
-as $$
+as $$$
   select auth.uid() is not null
     and exists (select 1 from public.profiles account where account.id = auth.uid() and account.status = 'active')
     and exists (
@@ -202,7 +202,7 @@ $$;
 
 create or replace function private.can_manage_practice_matter(target_matter uuid)
 returns boolean language sql stable security definer set search_path = ''
-as $$
+as $$$
   select auth.uid() is not null
     and exists (select 1 from public.profiles account where account.id = auth.uid() and account.status = 'active')
     and exists (
@@ -226,7 +226,7 @@ $$;
 
 create or replace function private.can_bill_practice_matter(target_matter uuid)
 returns boolean language sql stable security definer set search_path = ''
-as $$
+as $$$
   select auth.uid() is not null
     and exists (select 1 from public.profiles account where account.id = auth.uid() and account.status = 'active')
     and exists (
@@ -262,7 +262,7 @@ grant execute on function private.can_bill_practice_matter(uuid) to authenticate
 
 create or replace function private.guard_practice_matter_update()
 returns trigger language plpgsql set search_path = ''
-as $$
+as $$$
 begin
   if new.firm_id is distinct from old.firm_id
     or new.source_mandate_id is distinct from old.source_mandate_id
@@ -291,7 +291,7 @@ $$;
 
 create or replace function private.audit_practice_change()
 returns trigger language plpgsql security definer set search_path = ''
-as $$
+as $$$
 declare payload jsonb; record_id text; org_id uuid; actor_id uuid;
 begin
   payload := case when tg_op = 'DELETE' then to_jsonb(old) else to_jsonb(new) end;
@@ -338,7 +338,7 @@ for each row execute function private.audit_practice_change();
 
 create or replace function private.revoke_practice_matter_access_for_firm_change()
 returns trigger language plpgsql security definer set search_path = ''
-as $
+as $$
 declare target_firm uuid; target_user uuid;
 begin
   if tg_table_name = 'firm_members' then
@@ -365,7 +365,7 @@ begin
   if tg_op = 'DELETE' then return old; end if;
   return new;
 end;
-$;
+$$;
 revoke all on function private.revoke_practice_matter_access_for_firm_change() from public, anon, authenticated;
 create trigger firm_members_revoke_practice_access
   after update of status or delete on public.firm_members
@@ -377,7 +377,7 @@ create trigger law_firms_revoke_practice_access
 create or replace function public.list_qualified_firm_practitioners(target_firm uuid)
 returns table(user_id uuid, display_name text)
 language plpgsql stable security definer set search_path = ''
-as $
+as $$
 begin
   if auth.uid() is null or not exists (
     select 1
@@ -402,7 +402,7 @@ begin
     and private.has_current_practitioner_credential(pr.id)
   order by p.display_name;
 end;
-$;
+$$;
 revoke all on function public.list_qualified_firm_practitioners(uuid) from public, anon;
 grant execute on function public.list_qualified_firm_practitioners(uuid) to authenticated;
 
@@ -420,7 +420,7 @@ create or replace function public.create_practice_matter(
 )
 returns table(practice_matter_id uuid, matter_number text)
 language plpgsql security definer set search_path = ''
-as $$
+as $$$
 declare
   actor uuid := auth.uid();
   firm_role text;
