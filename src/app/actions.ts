@@ -270,7 +270,7 @@ export async function submitCredential(form: FormData) {
   }
   let encrypted: string;
   try { encrypted = encryptCredential(registration); }
-  catch (error) { redirect(`/professionals/credentials?error=${encodeURIComponent(SAFE_ACTION_ERROR)}`); }
+  catch { redirect(`/professionals/credentials?error=${encodeURIComponent(SAFE_ACTION_ERROR)}`); }
   const { error } = await supabase.from("practitioner_credentials").insert({
     practitioner_id: practitioner.id, credential_type: credentialType, issuing_body: issuer,
     registration_number_encrypted: encrypted, expires_at: expires,
