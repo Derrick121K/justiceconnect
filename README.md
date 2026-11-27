@@ -4,6 +4,8 @@
 
 Brand: midnight navy, white and restrained gold. Market: all nine South African provinces.
 
+The connected product suite has four surfaces: **JusticeConnect** (marketplace and client portal), **JCStudio** (legal practice management), **Compliance Centre** (practitioner, credential and firm verification), and **Platform Administration** (restricted system oversight). All four use the JusticeConnect identity, organisation and database security model.
+
 > This repository is a substantial application foundation, not a representation that the service is ready to accept real client matters. Production use requires a configured Supabase project, complete place-data import, security testing, POPIA work, professional-conduct review and operational staffing.
 
 ## Included application
@@ -21,6 +23,10 @@ Brand: midnight navy, white and restrained gold. Market: all nine South African 
 - Compliance workspace for credential, practitioner and firm review with audit events.
 - Public verified practitioner and firm directories, practice-area pages and province discovery.
 - GeoNames populated-place import utility for province-aware location discovery.
+- JCStudio private practice domain: internal matters, matter-team permissions, confidential notes, tasks, calendar-event foundation, time entries, document metadata and ZAR invoice records. This is separate from marketplace enquiries.
+- Accepted mandate conversion from JusticeConnect into a private JCStudio matter, with server-side verification and RLS enforcement.
+- JCStudio installable PWA shell and a hardened Windows Electron desktop client wrapper.
+- Restricted Platform Administration overview with aggregate platform metrics and audit metadata.
 - PostgreSQL/PostGIS schema, restrictive RLS policies and narrowly scoped security-definer workflows.
 - Unit tests, static project checks, deployment and security documentation.
 
@@ -28,14 +34,20 @@ Brand: midnight navy, white and restrained gold. Market: all nine South African 
 
 These features require further implementation or external services and are intentionally not faked:
 
-- Private file upload/download, malware scanning and secure evidence access. `matter_documents` metadata exists, but there is no enabled client upload UI or scanner integration.
+- Private legal document upload/download, malware scanning, quarantine, version history, signed download and secure evidence access. Both marketplace and JCStudio document tables are metadata only; no document bucket or scanner integration is enabled.
 - Full municipality, suburb, township, ward and address dataset. The included importer loads GeoNames populated places; authoritative municipal/address sources must supplement it.
 - True coordinate-radius search and interactive map UI. Place coordinates are stored for a subsequent PostGIS nearby-search endpoint.
-- Calendar provider integration, video consultations, payment gateway, invoicing and subscription billing.
-- Practitioner reviews, complaints, mandate document signing and advanced matter-management workflow.
+- External calendar provider and court-system integration, video consultations, payment gateway and subscription billing. JCStudio has a practice diary foundation and invoice/time-entry database structures, but a complete billing workflow, tax configuration and reconciliation are not enabled.
+- Practitioner reviews, complaints, electronic mandate signing and a complete conflict-check workflow. Active mandate status is required for marketplace conversion, but the full legal engagement and conflict process needs further development and professional review.
 - AI legal research. Do not enable generative legal advice until the corpus, source attribution, evaluation, safeguards and legal review are complete.
-- Formal conflict-check and mandate acceptance workflow. A conversation or consultation is not a mandate.
+- Trust accounting, client money ledger, disbursement management and payment reconciliation. Never treat the invoice tables as a regulated trust ledger.
 - Production incident response, backups/restore drills, penetration test and independent legal/privacy review.
+
+## JCStudio desktop application
+
+The web application is the system of record. Compatible browsers can install JCStudio as a PWA. A Windows desktop shell is in `desktop/`; it runs the same hosted app using Electron, with Node integration disabled, context isolation, sandboxing and navigation locked to a configured HTTPS origin. It does not locally store legal files or enable offline case access. See [desktop/README.md](desktop/README.md). The installer must be built, smoke-tested and signed with JMSE KAPA's organisational code-signing certificate before production distribution.
+
+See [docs/CONNECTED_PRODUCT_ARCHITECTURE.md](docs/CONNECTED_PRODUCT_ARCHITECTURE.md) for the shared product boundaries, authorisation model and next delivery gates.
 
 ## Requirements
 
@@ -64,7 +76,7 @@ Keep `.env.local`, all encryption keys and service-role credentials out of Git. 
 
 Create a new, dedicated Supabase project for JusticeConnect. Do not reuse the database of another JMSE application.
 
-Apply the timestamped SQL files in `supabase/migrations/` in ascending filename order, exactly once, against a dedicated JusticeConnect database. The repository currently contains 22 timestamped migrations. For an existing project, inspect `supabase migration list` and the Supabase migration ledger first; do not replay migrations already recorded as applied. The ledger below records the 22 migrations applied to the existing JusticeConnect project. A fresh database must receive the complete ordered migration set, followed by a separate validation pass.
+Apply the timestamped SQL files in `supabase/migrations/` in ascending filename order, exactly once, against a dedicated JusticeConnect database. The repository currently contains 23 timestamped migrations. For an existing project, inspect `supabase migration list` and the Supabase migration ledger first; do not replay migrations already recorded as applied. The existing JusticeConnect project has 22 migrations applied. The proposed JCStudio migration is a separate additive change and must be reviewed, validated and applied once before the new JCStudio database-backed routes are enabled. A fresh database must receive the complete ordered migration set, followed by a separate validation pass.
 
 For a linked project, install the Supabase CLI, run `supabase login`, `supabase link --project-ref YOUR_PROJECT_REF`, inspect the pending migration list, then inspect the pending migration plan and run `supabase db push` only after confirming the linked project reference, reviewing the migration diff, and ensuring a recoverable backup exists. Do not apply migrations to production from an unreviewed local checkout. After migrations, execute `supabase/bootstrap_admin.sql` in the SQL editor after replacing the placeholder with the confirmed owner's account email. This grants the first `super_admin` role. Treat that SQL as privileged break-glass setup and do not expose it in a public route.
 
@@ -125,7 +137,7 @@ JusticeConnect is a product of JMSE KAPA HOLDINGS (PTY) LTD. The platform must n
 
 ## Supabase migration ledger
 
-The following files match the migration versions recorded in the JusticeConnect Supabase project. These migrations have already been applied to that project; do not reapply them there.
+The following files match the migration versions recorded in the JusticeConnect Supabase project. The 22 entries in this ledger are already applied to that project; do not reapply them there.
 
 <!-- JUSTICECONNECT_SUPABASE_MIGRATIONS_START -->
 - `20261110195704_initial_platform.sql`
@@ -152,3 +164,7 @@ The following files match the migration versions recorded in the JusticeConnect 
 - `20261127173151_south_africa_credential_expiry_timezone.sql`
 
 <!-- JUSTICECONNECT_SUPABASE_MIGRATIONS_END -->
+
+### Proposed next migration
+
+- `20261127190000_jcstudio_and_connected_products.sql` — JCStudio internal practice schema, access helpers, accepted-mandate conversion and product-suite support. This file is **not yet recorded as applied** in the live JusticeConnect migration ledger.

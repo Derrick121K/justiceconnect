@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/connected-legal-suite]
   pull_request:
-    branches: [main]
+    branches: [main, feature/production-readiness]
   workflow_dispatch:
 
 permissions:
