@@ -2,7 +2,7 @@
 
 ## Execution status
 
-**Partially applied / not yet remediated.** The JusticeConnect Supabase project now reports `ACTIVE_HEALTHY`. The 17 existing migrations were confirmed against the live migration ledger. Live advisor and catalog inspection has been performed. No database schema changes have yet been made from the hardening branch. Repository checks are not live database verification.
+**Partially remediated.** The dedicated JusticeConnect Supabase project reports `ACTIVE_HEALTHY`. The original 17 migrations were confirmed against the live ledger. Three additional migrations are now applied: firm workspace tenant isolation (`20261127122425`), practitioner eligibility and consultation locking (`20261127122930`), and citext/PostGIS privilege hardening (`20261127123216`). Live catalog verification confirms the firm policies are corrected, the helper functions are installed, and `citext` is in the `extensions` schema. The database remains empty; adversarial tests with multiple real test identities have not yet been run.
 
 A Supabase development branch was quoted at **US$0.01344 per hour**. It is the preferred isolated test target. Do not create the metered branch until the project owner explicitly approves this recurring cost. Do not use production to iterate on schema changes.
 
@@ -25,24 +25,26 @@ The live `pg_catalog.pg_policies` definitions show that four firm workspace poli
 
 The branch policies currently contain the tautology `fm.firm_id = fm.firm_id`. The firm profile policy compares `fm.firm_id = fm.id`, which incorrectly blocks legitimate administration. The branch predicate can allow an administrator of one firm to mutate branches belonging to another firm.
 
-A reviewed, tenant-qualified correction is prepared at `supabase/patches/firm_workspace_rls_scope_hardening.sql`. After applying it, run `supabase/verification/firm_workspace_rls_policy_check.sql` and a two-firm/two-admin adversarial test before enabling firm workspace write operations.
+Migration `20261127122425_firm_workspace_rls_scope_hardening.sql` corrected the four policy predicates. The live `pg_catalog.pg_policies` verification passed with no exceptions. Still required: two-firm/two-admin integration tests, including branch INSERT/UPDATE/DELETE and firm-profile UPDATE attempts against another firm's IDs.
 
 ## Other live advisor findings
 
 - `public.spatial_ref_sys` is PostGIS's system reference table. Do not attempt to enable RLS or drop it. PostGIS 3.3.7 is installed in `public` and is not relocatable on this instance; use the Supabase Support-assisted relocation route after a backup, rather than a `DROP EXTENSION ... CASCADE` rebuild.
-- Three PostGIS `st_estimatedextent` overloads are executable by `anon`; review this with Supabase Support as part of the PostGIS relocation. The other authenticated `SECURITY DEFINER` RPCs have intentional execute grants and require their internal authorization checks.
+- PostGIS 3.3.7 remains installed in `public` and is not relocatable by ordinary SQL on this instance. The `spatial_ref_sys` RLS advisor error is a PostGIS system-table warning; follow Supabase Support's supported relocation process after a verified backup. A migration attempted to revoke `PUBLIC`, `anon` and `authenticated` execution from three `st_estimatedextent` overloads, but post-migration catalog checks still show those grants. Do not report this privilege finding as fixed; Supabase Support / extension-owner action is still required. The application's 16 authenticated `SECURITY DEFINER` RPCs are intentional authenticated workflows, not anonymous access; verify their individual auth/role checks before changing grants.
 - `fidelity_fund_certificates` has RLS enabled but no policies. It is currently fail-closed; do not add read access until a product workflow and tenant/owner policy are defined.
 - Performance advisor reports RLS init-plan warnings, missing FK indexes, unused indexes (expected on a new empty database), and multiple permissive policies. Address these in a separately tested optimization pass; do not drop planned spatial/search indexes based on empty-database statistics.
 
-## Required migration work
+## Remaining database hardening
 
-Generate the migration with the Supabase CLI after the project is healthy and the development-branch cost is approved:
+The following changes have been applied and checked in the live project:
 
-```bash
-supabase migration new eligibility_and_consultation_concurrency_hardening
-```
+- Firm profile and branch admin policies now bind membership to `law_firms.id` / `firm_branches.firm_id` and require an active owner/administrator role.
+- Candidate matching, matter disclosure, expression of interest, client acceptance and consultation request workflows now use the private current-credential helper and require an active practitioner account.
+- Credential approval rejects practitioner self-approval, missing encrypted registration value, missing issuing body, unsupported credential type and expired credentials.
+- Consultation booking obtains a transaction-scoped advisory lock per practitioner before overlap checks and inserts.
+- `citext` 1.6 now resides in `extensions`.
 
-Implement and review:
+Remaining schema changes must be generated with the Supabase CLI and tested on an approved Supabase development branch. That branch was quoted at US$0.01344 per hour; do not create it until the owner approves the metered cost. Do not iterate against production.
 
 1. **Centralized current eligibility checks.** Update `public.find_matter_practitioner_candidates`, `public.share_matter_with_practitioner`, `public.practitioner_express_interest`, `public.client_accept_practitioner_interest` and `public.request_consultation` to use `private.has_current_practitioner_credential(p.id)` and verify the practitioner profile is `active`, in addition to existing verified/visible checks. Preserve client ownership, consent, disclosure, expertise and service-area rules. At acceptance, re-check that the matter remains eligible and its disclosure remains active.
 
@@ -54,8 +56,8 @@ Implement and review:
 
 ## Verification before promotion
 
-- Wait for the dedicated JusticeConnect project to report `ACTIVE_HEALTHY`.
-- Inspect its actual migration ledger; never replay already-applied migrations.
+- Confirm the dedicated JusticeConnect project remains `ACTIVE_HEALTHY`.
+- Confirm the migration ledger contains the 20 migrations and matches the repository; never replay already-applied migrations.
 - Approve the quoted development-branch cost, create that branch and test only there.
 - Run Supabase security, performance and health advisors; resolve or document every finding.
 - Test anonymous users, multiple clients/practitioners, expired/rejected credentials, inactive/suspended profiles, separate firms, compliance and super-admin roles.
