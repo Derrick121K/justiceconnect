@@ -12,7 +12,7 @@ const required = [
   "src/lib/form-data.ts",
   "proxy.ts",
   "supabase/bootstrap_admin.sql",
-  "supabase/patches/firm_workspace_rls_scope_hardening.sql",
+  "supabase/migrations/20261127122425_firm_workspace_rls_scope_hardening.sql",
   "supabase/verification/firm_workspace_rls_policy_check.sql",
 ];
 const failures = [];
@@ -86,7 +86,7 @@ for (const table of [
 }
 
 const firmPolicyPatch = await readFile(
-  path.join(root, "supabase/patches/firm_workspace_rls_scope_hardening.sql"),
+  path.join(root, "supabase/migrations/20261127122425_firm_workspace_rls_scope_hardening.sql"),
   "utf8",
 );
 for (const expected of [
