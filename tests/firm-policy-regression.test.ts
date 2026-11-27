@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
-const patchUrl = new URL("../supabase/patches/firm_workspace_rls_scope_hardening.sql", import.meta.url);
+const patchUrl = new URL("../supabase/migrations/20261127122425_firm_workspace_rls_scope_hardening.sql", import.meta.url);
 const verificationUrl = new URL("../supabase/verification/firm_workspace_rls_policy_check.sql", import.meta.url);
 
 describe("firm workspace tenant isolation policies", () => {
