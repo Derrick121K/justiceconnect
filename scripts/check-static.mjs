@@ -194,7 +194,7 @@ for (const invariant of [
   "studio members read internal notes",
   "studio billing roles read invoices",
   "account.status = 'active'",
-  "f.verification_status = 'verified',
+  "f.verification_status = 'verified'",
   "enable row level security",
 ]) {
   if (!jcstudioMigration.includes(invariant)) {
