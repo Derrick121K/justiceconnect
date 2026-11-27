@@ -13,6 +13,10 @@ const required = [
   "proxy.ts",
   "supabase/bootstrap_admin.sql",
   "supabase/migrations/20261127122425_firm_workspace_rls_scope_hardening.sql",
+  "supabase/migrations/20261127122930_practitioner_eligibility_and_consultation_lock.sql",
+  "supabase/migrations/20261127123216_citext_and_postgis_function_privilege_hardening.sql",
+  "tests/firm-policy-regression.test.ts",
+  "tests/practitioner-eligibility-regression.test.ts",
   "supabase/verification/firm_workspace_rls_policy_check.sql",
 ];
 const failures = [];
