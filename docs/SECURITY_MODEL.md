@@ -42,14 +42,17 @@ Account identity, practitioner registration numbers, client matter summaries, co
 - Backup/restore drill and security incident tabletop exercise.
 
 
-## Database hardening still required
+## Database hardening status
 
-The repository migration `20261110195922_expired_credential_visibility_guard.sql` already checks for a current qualifying credential in candidate matching, disclosure, practitioner interest, client acceptance, consultation requests and public practitioner visibility. Migration `20261110195939_rls_cycle_and_document_metadata_hardening.sql` adds a private current-credential helper used by visibility policies. Remaining database work is to use that helper consistently within transactional workflows, re-check active practitioner account status at the point of use, require complete encrypted credential evidence before approval, and test expiry/suspension edge cases. A live catalog check also confirmed a critical firm-isolation issue: branch RLS policies compare `fm.firm_id` with itself rather than the branch's `firm_id`, while the firm profile update policy compares `fm.firm_id` with the membership row's `fm.id`. A tenant-qualified correction and verification query are prepared under `supabase/patches/` and `supabase/verification/`.
+The repository migrations now include three live database hardening changes applied on 2026-11-27:
 
-Consultation conflict checks currently use a read-then-insert availability check. Concurrent requests may both pass before either insert commits. Add a transaction-scoped lock keyed to the practitioner and prove the fix with concurrent integration tests.
+- `20261127122425_firm_workspace_rls_scope_hardening.sql` explicitly scopes firm administrator membership checks to the outer `law_firms.id` and `firm_branches.firm_id` values. Live catalog verification confirms all four corrected policies are restricted to authenticated active owners/administrators.
+- `20261127122930_practitioner_eligibility_and_consultation_lock.sql` applies current credential and active-account checks at transactional eligibility boundaries, prevents practitioner self-approval and incomplete credential approval, and adds transaction-scoped per-practitioner advisory locking before consultation overlap checks.
+- `20261127123216_citext_and_postgis_function_privilege_hardening.sql` relocates `citext` to `extensions`. The attempt to restrict three PostGIS `st_estimatedextent` overloads did not change their live ACLs; they remain executable by `anon` and `authenticated`. PostGIS itself remains in `public`, with Supabase's advisor flagging `spatial_ref_sys`. These PostGIS findings require the supported Supabase Support / extension-owner procedure and are not marked resolved.
 
-The JusticeConnect Supabase project now reports `ACTIVE_HEALTHY`. Seventeen existing migrations were confirmed against the live ledger. No schema change has yet been applied from this hardening branch. A Supabase development branch was quoted at US$0.01344 per hour and requires explicit owner approval before creation. Track the database work in [PENDING_DATABASE_HARDENING.md](./PENDING_DATABASE_HARDENING.md), inspect migration history after the project is healthy, test only on the approved development branch, and run security/performance advisors before production promotion.
+The live project reports `ACTIVE_HEALTHY`, and the 20-migration ledger matches the repository. The database currently has no application rows, so multi-user cross-firm adversarial tests and concurrent booking tests still need non-sensitive test fixtures. A Supabase development branch was quoted at US$0.01344 per hour and requires explicit owner approval before creation. Do not perform further migration iteration against production.
 
+Track remaining work in [PENDING_DATABASE_HARDENING.md](./PENDING_DATABASE_HARDENING.md), run the two-firm/two-admin isolation tests, run concurrency tests, coordinate PostGIS remediation with Supabase Support, and complete the independent security and operational release gates before accepting real matters.
 ## Important launch blockers
 
 - Repository CI configuration is new and must complete successfully on the pull request before merge.
