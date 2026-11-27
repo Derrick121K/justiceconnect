@@ -6,7 +6,7 @@
 - [ ] Configure `.env.local` from `.env.example`.
 - [ ] Generate and securely back up `CREDENTIAL_ENCRYPTION_KEY`.
 - [ ] Install dependencies and commit the generated package lockfile.
-- [ ] Apply all 18 timestamped migrations in ascending filename order to a fresh database; inspect migration history first for an existing database.
+- [ ] Apply all 21 timestamped migrations in ascending filename order to a fresh database; inspect migration history first for an existing database.
 - [ ] Run `supabase db advisors` and resolve security/performance findings.
 - [ ] Complete the database tasks in `docs/PENDING_DATABASE_HARDENING.md` before real practitioner matching or consultations.
 - [ ] Execute `supabase/bootstrap_admin.sql` with the confirmed owner email.
