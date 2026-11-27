@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  currentSouthAfricanDate,
   isDateOnly,
+  isDateOnOrAfter,
   isEmail,
   isSouthAfricanLocalDateTime,
   isUuid,
@@ -34,6 +36,18 @@ describe("server action form-data helpers", () => {
     expect(isDateOnly("2026-11-27")).toBe(true);
     expect(isDateOnly("2026-02-29")).toBe(false);
     expect(isDateOnly("2024-02-29")).toBe(true);
+  });
+
+  it("rejects expired document dates and accepts current/future dates", () => {
+    expect(isDateOnOrAfter("2026-11-26", "2026-11-27")).toBe(false);
+    expect(isDateOnOrAfter("2026-11-27", "2026-11-27")).toBe(true);
+    expect(isDateOnOrAfter("2027-01-01", "2026-11-27")).toBe(true);
+    expect(isDateOnOrAfter("2026-02-30", "2026-11-27")).toBe(false);
+    expect(isDateOnOrAfter("", "2026-11-27")).toBe(false);
+  });
+
+  it("uses the South African calendar date for credential expiry checks", () => {
+    expect(currentSouthAfricanDate(new Date("2026-11-27T00:00:00.000Z"))).toBe("2026-11-27");
   });
 
   it("validates South African local consultation date/time input", () => {
