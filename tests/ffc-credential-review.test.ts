@@ -29,8 +29,9 @@ describe("Fidelity Fund Certificate review rules", () => {
     );
 
     expect(sql).toContain("private.has_current_practitioner_credential(p.id)");
-    expect(helperMigration.toLowerCase()).toContain("'lpc_registration', 'candidate_registration', 'admission'");
-    expect(helperMigration.toLowerCase()).not.toMatch(/'lpc_registration',\s*'candidate_registration',\s*'admission',\s*'ffc'/);
+    const normalizedHelperMigration = helperMigration.toLowerCase().replace(/\s+/g, " ");
+    expect(normalizedHelperMigration).toMatch(/'lpc_registration'\s*,\s*'candidate_registration'\s*,\s*'admission'/);
+    expect(normalizedHelperMigration).not.toMatch(/'lpc_registration'\s*,\s*'candidate_registration'\s*,\s*'admission'\s*,\s*'ffc'/);
   });
 
   it("uses South African local calendar dates for expiry decisions", async () => {
