@@ -12,6 +12,7 @@ import { signOut } from "@/app/actions";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { firstRelated, type Related } from "@/lib/types/relations";
+import { currentSouthAfricanDate } from "@/lib/form-data";
 
 type FirmMembershipRow = {
   firm_id: string;
@@ -22,6 +23,53 @@ type FirmMembershipRow = {
     verification_status: string | null;
   }>;
 };
+
+type CredentialRow = {
+  id: string;
+  credential_type: string;
+  issuing_body: string | null;
+  verification_status: string;
+  expires_at: string | null;
+  created_at: string;
+};
+
+function credentialLabel(type: string): string {
+  const labels: Record<string, string> = {
+    lpc_registration: "LPC registration",
+    candidate_registration: "Candidate registration",
+    admission: "Admission / enrolment",
+    ffc: "Fidelity Fund Certificate (FFC)",
+  };
+  return labels[type] ?? "Professional credential";
+}
+
+function profileVerificationLabel(status: string): string {
+  const labels: Record<string, string> = {
+    not_started: "Not yet reviewed",
+    pending: "Awaiting profile review",
+    verified: "Verified",
+    rejected: "Not approved",
+    suspended: "Suspended",
+  };
+  return labels[status] ?? "Status unavailable";
+}
+
+function credentialStatusLabel(credential: CredentialRow, today: string): string {
+  if (credential.expires_at && credential.expires_at < today) {
+    return "Expired — replacement required";
+  }
+  if (credential.verification_status === "pending") return "Awaiting compliance review";
+  if (credential.verification_status === "verified") return "Verified";
+  if (credential.verification_status === "rejected") return "Not approved";
+  return credential.verification_status.replaceAll("_", " ");
+}
+
+function formatDate(date: string): string {
+  return new Intl.DateTimeFormat("en-ZA", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00.000Z`));
+}
 
 export default async function DashboardPage({
   searchParams,
@@ -79,6 +127,23 @@ export default async function DashboardPage({
   ]);
 
   const firmMemberships = (firmData ?? []) as FirmMembershipRow[];
+  const { data: credentialData } = practitioner
+    ? await db
+        .from("practitioner_credentials")
+        .select("id,credential_type,issuing_body,verification_status,expires_at,created_at")
+        .eq("practitioner_id", practitioner.id)
+        .order("created_at", { ascending: false })
+    : { data: [] };
+  const credentials = (credentialData ?? []) as CredentialRow[];
+  const today = currentSouthAfricanDate();
+  const expiredCredentials = credentials.filter(
+    (credential) => credential.expires_at !== null && credential.expires_at < today,
+  );
+  const currentPendingCredentials = credentials.filter(
+    (credential) =>
+      credential.verification_status === "pending" &&
+      (!credential.expires_at || credential.expires_at >= today),
+  );
 
   return (
     <main className="workspace-page">
@@ -185,16 +250,51 @@ export default async function DashboardPage({
                     <ShieldCheck size={18} />
                     <div>
                       <b>{practitioner.public_name}</b>
-                      <small>
-                        Verification: {practitioner.verification_status.replaceAll("_", " ")}
-                      </small>
+                      <small>Profile review: {profileVerificationLabel(practitioner.verification_status)}</small>
                     </div>
                   </div>
                   <p className="form-hint">
-                    Public discovery remains disabled until professional verification is completed.
+                    Profile approval and credential review are separate checks. Your profile stays hidden from public discovery until the required professional registration is verified and the profile is approved.
                   </p>
+                  {credentials.length > 0 ? (
+                    <div className="credential-list">
+                      <h3>Credential submissions</h3>
+                      {credentials.map((credential) => {
+                        const expired = Boolean(credential.expires_at && credential.expires_at < today);
+                        return (
+                          <div className="notification-row" key={credential.id}>
+                            <b>{credentialLabel(credential.credential_type)}</b>
+                            <p>{credential.issuing_body ?? "Issuing body not supplied"}</p>
+                            <small>
+                              {credentialStatusLabel(credential, today)}
+                              {credential.expires_at ? ` · Expires ${formatDate(credential.expires_at)}` : ""}
+                            </small>
+                            {expired && (
+                              <p className="form-hint">
+                                This document cannot be approved as a current credential. Submit an up-to-date document.
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="form-hint">No professional credentials have been submitted yet.</p>
+                  )}
+                  {expiredCredentials.length > 0 ? (
+                    <p className="form-alert">
+                      {expiredCredentials.length === 1
+                        ? "One submitted credential has expired."
+                        : `${expiredCredentials.length} submitted credentials have expired.`}
+                      {" "}Please replace {expiredCredentials.length === 1 ? "it" : "them"} with current documents.
+                    </p>
+                  ) : currentPendingCredentials.length > 0 ? (
+                    <p className="form-hint">
+                      Your current credential submission{currentPendingCredentials.length === 1 ? " is" : "s are"} awaiting compliance review.
+                    </p>
+                  ) : null}
                   <Link className="quick-link" href="/professionals/credentials">
-                    Submit professional credentials →
+                    Submit or replace professional credentials →
                   </Link>
                   <Link className="quick-link" href="/dashboard/opportunities">
                     View shared case opportunities →
