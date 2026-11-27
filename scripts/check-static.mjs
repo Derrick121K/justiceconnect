@@ -9,6 +9,29 @@ const required = [
   "src/app/dashboard/opportunities/page.tsx",
   "src/app/professionals/credentials/page.tsx",
   "src/app/admin/page.tsx",
+  "src/app/jcstudio/page.tsx",
+  "src/app/jcstudio/matters/page.tsx",
+  "src/app/jcstudio/matters/new/page.tsx",
+  "src/app/jcstudio/matters/[id]/page.tsx",
+  "src/app/jcstudio/tasks/page.tsx",
+  "src/app/jcstudio/intake/page.tsx",
+  "src/app/compliance/page.tsx",
+  "src/app/platform-admin/page.tsx",
+  "src/components/pwa-register.tsx",
+  "public/manifest.webmanifest",
+  "public/icons/jcstudio.svg",
+  "public/offline.html",
+  "public/sw.js",
+  "desktop/main.cjs",
+  "desktop/preload.cjs",
+  "desktop/setup.html",
+  "desktop/setup.js",
+  "desktop/setup.css",
+  "desktop/package.json",
+  "docs/CONNECTED_PRODUCT_ARCHITECTURE.md",
+  "tests/connected-suite-security.test.ts",
+  "supabase/migrations/20261127183352_jcstudio_and_connected_products.sql",
+  "supabase/migrations/20261127183511_jcstudio_trigger_acl_hardening.sql",
   "src/lib/supabase/server.ts",
   "src/lib/form-data.ts",
   "proxy.ts",
@@ -82,6 +105,15 @@ for (const table of [
   "consultations",
   "notifications",
   "audit_events",
+  "practice_matters",
+  "practice_matter_members",
+  "practice_matter_notes",
+  "practice_tasks",
+  "practice_events",
+  "practice_time_entries",
+  "practice_documents",
+  "practice_invoices",
+  "practice_invoice_items",
 ]) {
   const explicitlyEnabled = new RegExp(
     `alter\\s+table\\s+public\\.${table}\\s+enable\\s+row\\s+level\\s+security`,
@@ -150,6 +182,34 @@ if (
   !dashboardPage.includes("Expired — replacement required")
 ) {
   failures.push("Dashboard must distinguish profile approval from credential review and show expired documents.");
+}
+
+const jcstudioMigration = await readFile(
+  path.join(root, "supabase/migrations/20261127183352_jcstudio_and_connected_products.sql"),
+  "utf8",
+);
+for (const invariant of [
+  "create_practice_matter",
+  "mandate_row.engagement_status <> 'active'",
+  "Africa/Johannesburg",
+  "studio members read internal notes",
+  "studio billing roles read invoices",
+  "firm_members_revoke_practice_access",
+  "revoke all on function private.guard_practice_matter_update() from public, anon, authenticated;",
+  "law_firms_revoke_practice_access",
+  "grant select on public.practice_matters to authenticated;",
+  "account.status = 'active'",
+  "f.verification_status = 'verified'",
+  "enable row level security",
+]) {
+  if (!jcstudioMigration.includes(invariant)) {
+    failures.push(`JCStudio migration is missing security or workflow invariant: ${invariant}`);
+  }
+}
+
+const serviceWorker = await readFile(path.join(root, "public/sw.js"), "utf8");
+if (/cache\.put|cache\.addAll|caches\.match\(request/i.test(serviceWorker)) {
+  failures.push("Service worker must not cache authenticated or confidential application responses.");
 }
 
 const actionsFile = await readFile(path.join(root, "src/app/actions.ts"), "utf8");

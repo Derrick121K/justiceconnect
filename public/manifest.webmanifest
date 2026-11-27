@@ -1,0 +1,14 @@
+{
+  "id": "/",
+  "name": "JusticeConnect and JCStudio",
+  "short_name": "JCStudio",
+  "description": "Connected legal marketplace and professional practice workspace.",
+  "start_url": "/jcstudio",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "window-controls-overlay"],
+  "background_color": "#0b1728",
+  "theme_color": "#0b1728",
+  "orientation": "any",
+  "icons": [{"src":"/icons/jcstudio.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
