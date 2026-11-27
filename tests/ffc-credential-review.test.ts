@@ -33,6 +33,17 @@ describe("Fidelity Fund Certificate review rules", () => {
     expect(helperMigration.toLowerCase()).not.toMatch(/'lpc_registration',\s*'candidate_registration',\s*'admission',\s*'ffc'/);
   });
 
+  it("uses South African local calendar dates for expiry decisions", async () => {
+    const sql = (await readFile(
+      new URL("../supabase/migrations/20261127173151_south_africa_credential_expiry_timezone.sql", import.meta.url),
+      "utf8",
+    )).toLowerCase();
+
+    expect(sql).toContain("africa/johannesburg");
+    expect(sql).toContain("has_current_practitioner_credential");
+    expect(sql).toContain("south_african_today");
+  });
+
   it("keeps the review RPC protected and records only the decision", async () => {
     const sql = (await readFile(migrationPath, "utf8")).toLowerCase();
 
