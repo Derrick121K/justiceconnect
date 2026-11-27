@@ -124,7 +124,7 @@ export async function createPractitionerProfile(form: FormData) {
     selected_provinces: [...new Set(provinceIds)],
     selected_places: [...new Set(placeIds)],
   });
-  if (coverageError) redirect(`/professionals/join?error=${encodeURIComponent(coverageError.message)}`);
+  if (coverageError) redirect(`/professionals/join?error=${encodeURIComponent(SAFE_ACTION_ERROR)}`);
   redirect("/dashboard?message=Practitioner%20profile%20submitted%20for%20verification");
 }
 
@@ -188,7 +188,7 @@ export async function acceptPractitionerInterest(form: FormData) {
   const interestId = value(form, "interest_id");
   if (!isUuid(interestId)) redirect("/dashboard?error=Invalid%20request");
   const { data, error } = await supabase.rpc("client_accept_practitioner_interest", { target_interest: interestId });
-  if (error) redirect(`/dashboard?error=${encodeURIComponent(SAFE_ACTION_ERROR)}`);
+  if (error || !isUuid(data)) redirect(`/dashboard?error=${encodeURIComponent(SAFE_ACTION_ERROR)}`);
   redirect(`/messages?conversation=${data}`);
 }
 
