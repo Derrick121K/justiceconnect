@@ -2,12 +2,13 @@
 
 ## Live database status
 
-The dedicated JusticeConnect Supabase project reports `ACTIVE_HEALTHY`. The live migration ledger contains **21 migrations**, including the four additional migrations applied during the production-readiness work:
+The dedicated JusticeConnect Supabase project reports `ACTIVE_HEALTHY`. The live migration ledger contains **22 migrations**, including the five additional migrations applied during the production-readiness work:
 
 - `20261127122425_firm_workspace_rls_scope_hardening`
 - `20261127122930_practitioner_eligibility_and_consultation_lock`
 - `20261127123216_citext_and_postgis_function_privilege_hardening`
 - `20261127172902_ffc_credential_review_and_expiry_rules`
+- `20261127173151_south_africa_credential_expiry_timezone`
 
 The README migration ledger matches the live ledger. Do not replay migrations already recorded as applied.
 
@@ -20,6 +21,8 @@ The README migration ledger matches the live ledger. Do not replay migrations al
 3. **Credential evidence.** Credential verification requires encrypted registration data and an issuing body, and rejects expired credentials. The latest review migration separately permits an LPC-issued Fidelity Fund Certificate (FFC) to be reviewed when the encrypted certificate number and current annual expiry date are supplied.
 
 4. **FFC is not admission.** The private practitioner-eligibility helper intentionally continues to require a current qualifying LPC registration, candidate registration or admission/enrolment record. An FFC is an additional, distinct certificate for the practices that require it; it does not alone establish admission/enrolment or enable public practitioner discovery.
+
+5. **South African expiry date.** The eligibility helper and credential review RPC use `Africa/Johannesburg` calendar dates, matching the application's server-side expiry validation.
 
 5. **Consultation race protection.** Consultation requests acquire a transaction-scoped advisory lock for the practitioner before overlap checks and insert, preventing concurrent requests from both passing the same availability check.
 
