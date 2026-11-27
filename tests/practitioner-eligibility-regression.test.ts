@@ -20,7 +20,7 @@ describe("practitioner eligibility and consultation concurrency migration", () =
       expect(sql).toContain(`function public.${functionName}`);
     }
 
-    expect(sql.match(/private\.has_current_practitioner_credential\(p\.id\)/g)).toHaveLength(5);
+    expect(sql.match(/private\.has_current_practitioner_credential\(p\.id\)/g)).toHaveLength(6);
     expect(sql).toContain("pr.status = 'active'");
   });
 
