@@ -64,7 +64,7 @@ Keep `.env.local`, all encryption keys and service-role credentials out of Git. 
 
 Create a new, dedicated Supabase project for JusticeConnect. Do not reuse the database of another JMSE application.
 
-Apply the timestamped SQL files in `supabase/migrations/` in ascending filename order, exactly once, against a dedicated JusticeConnect database. The repository currently contains 17 timestamped migrations. For an existing project, inspect `supabase migration list` and the Supabase migration ledger first; do not replay migrations already recorded as applied. The ledger below records the 17 migrations previously applied to the existing JusticeConnect project. A fresh database must receive the complete ordered migration set, followed by a separate validation pass.
+Apply the timestamped SQL files in `supabase/migrations/` in ascending filename order, exactly once, against a dedicated JusticeConnect database. The repository currently contains 18 timestamped migrations. For an existing project, inspect `supabase migration list` and the Supabase migration ledger first; do not replay migrations already recorded as applied. The ledger below records the 18 migrations applied to the existing JusticeConnect project. A fresh database must receive the complete ordered migration set, followed by a separate validation pass.
 
 For a linked project, install the Supabase CLI, run `supabase login`, `supabase link --project-ref YOUR_PROJECT_REF`, inspect the pending migration list, then inspect the pending migration plan and run `supabase db push` only after confirming the linked project reference, reviewing the migration diff, and ensuring a recoverable backup exists. Do not apply migrations to production from an unreviewed local checkout. After migrations, execute `supabase/bootstrap_admin.sql` in the SQL editor after replacing the placeholder with the confirmed owner's account email. This grants the first `super_admin` role. Treat that SQL as privileged break-glass setup and do not expose it in a public route.
 
@@ -145,4 +145,5 @@ The following files match the migration versions recorded in the JusticeConnect 
 - `20261110195922_expired_credential_visibility_guard.sql`
 - `20261110195939_rls_cycle_and_document_metadata_hardening.sql`
 - `20261110200109_security_definer_helpers_and_rpc_hardening.sql`
+- `20261127122425_firm_workspace_rls_scope_hardening.sql`
 <!-- JUSTICECONNECT_SUPABASE_MIGRATIONS_END -->
