@@ -2,55 +2,53 @@
 
 ## Execution status
 
-**Not applied.** The linked Supabase project named `JusticeConnect` returned `INACTIVE` when checked on 2026-11-27. This repository branch has not changed the live database. Do not interpret the application-side hardening or CI configuration as database verification.
+**Not applied.** The JusticeConnect Supabase project restore was accepted, but the project still reports `COMING_UP`. No database query, migration or advisor run has been performed since restoration. Repository checks are not live database verification.
 
-Before database work, restore the dedicated JusticeConnect project, verify its project reference and region, inspect the migration ledger, and confirm a recoverable backup. Do not run any migration against an unrelated JMSE project.
+A Supabase development branch was quoted at **US$0.01344 per hour**. It is the preferred isolated test target. Do not create the metered branch until the project owner explicitly approves this recurring cost. Do not use production to iterate on schema changes.
+
+## Existing controls already present
+
+Migration `20261110195922_expired_credential_visibility_guard.sql` already checks for a current, verified qualifying credential in candidate matching, disclosure, practitioner interest, client acceptance, consultation requests and public practitioner visibility.
+
+Migration `20261110195939_rls_cycle_and_document_metadata_hardening.sql` adds `private.has_current_practitioner_credential(uuid)` and uses it in public visibility policies.
+
+The remaining work is to use this private helper consistently inside transactional workflows, re-check that practitioner accounts are active at the point of use, require complete encrypted credential evidence before approval, and close a race in consultation conflict checking.
 
 ## Required migration work
 
-Generate the migration with the Supabase CLI (do not hand-create a timestamped migration filename):
+Generate the migration with the Supabase CLI after the project is healthy and the development-branch cost is approved:
 
 ```bash
-supabase migration new current_credential_eligibility_and_consultation_lock
+supabase migration new eligibility_and_consultation_concurrency_hardening
 ```
 
-Implement and review the following in the generated migration:
+Implement and review:
 
-1. **Enforce current credentials at every eligibility boundary.** The existing `private.has_current_practitioner_credential(uuid)` helper must be checked by:
-   - `public.find_matter_practitioner_candidates`
-   - `public.share_matter_with_practitioner`
-   - `public.practitioner_express_interest`
-   - `public.client_accept_practitioner_interest`
-   - `public.request_consultation`
+1. **Centralized current eligibility checks.** Update `public.find_matter_practitioner_candidates`, `public.share_matter_with_practitioner`, `public.practitioner_express_interest`, `public.client_accept_practitioner_interest` and `public.request_consultation` to use `private.has_current_practitioner_credential(p.id)` and verify the practitioner profile is `active`, in addition to existing verified/visible checks. Preserve client ownership, consent, disclosure, expertise and service-area rules. At acceptance, re-check that the matter remains eligible and its disclosure remains active.
 
-   Verify the practitioner's profile is active, visible and verified as applicable. A practitioner with an expired, rejected, suspended or missing qualifying credential must not receive new disclosures, appear in matching, express interest or be booked.
+2. **Credential review integrity.** Before setting a credential to `verified`, require a non-empty encrypted registration value, a non-empty issuing body, a supported qualifying credential type and no expired date. Preserve compliance/super-admin authorization and prohibit self-verification. Never log plaintext credential numbers.
 
-2. **Strengthen credential review.** Before marking a credential verified, require a non-empty encrypted registration number, a non-empty issuing body and a credential type accepted by the verification procedure. An expiry date earlier than the current date must be rejected. Preserve the rule that the practitioner cannot self-verify. Record the decision in the audit table without storing plaintext credential values.
+3. **Concurrency-safe consultation requests.** The current consultation function performs a read-then-insert availability check and can race. Acquire a transaction-scoped advisory lock keyed to the practitioner before checking overlap, then check and insert within the same transaction. Keep the existing 45-minute duration unless product policy changes. Add concurrent integration coverage proving only one overlapping request can be created.
 
-3. **Make consultation conflict checks concurrency-safe.** The existing availability check is a read followed by an insert and can race under concurrent requests. Acquire a transaction-scoped lock for the practitioner before checking overlaps, then perform the overlap check and insert in the same transaction. An exclusion constraint is an alternative only after verifying the required extension and existing-data compatibility. Add a parallel-request integration test proving that overlapping bookings cannot both be accepted.
+4. **Least privilege and auditability.** Keep privileged functions schema-qualified with `SET search_path = ''`, validate `auth.uid()`, revoke default execution from `PUBLIC` and `anon`, and grant only the intended role. Audit state changes without storing confidential case content or credential values.
 
-4. **Preserve least privilege.** Keep privileged functions schema-qualified with `SET search_path = ''`, check `auth.uid()` inside every exposed privileged workflow, and explicitly revoke default execution from `PUBLIC` and `anon`. Grant only the intended authenticated role. Do not add broad table grants or public storage access.
+## Verification before promotion
 
-## Required verification before promotion
+- Wait for the dedicated JusticeConnect project to report `ACTIVE_HEALTHY`.
+- Inspect its actual migration ledger; never replay already-applied migrations.
+- Approve the quoted development-branch cost, create that branch and test only there.
+- Run Supabase security, performance and health advisors; resolve or document every finding.
+- Test anonymous users, multiple clients/practitioners, expired/rejected credentials, inactive/suspended profiles, separate firms, compliance and super-admin roles.
+- Test IDOR/BOLA UUID substitution for matters, practitioners, disclosures, consultations and firms.
+- Test disclosure revocation, matter closure, repeated acceptance and concurrent consultation requests.
+- Verify audit events, migration history and recovery strategy before production promotion.
 
-- Apply the new migration to a disposable database or Supabase development branch first; do not use production as the test environment.
-- Confirm migration history before applying anything to an existing database. Never replay the 17 migrations already recorded in the repository ledger.
-- Run Supabase security, performance and health advisors.
-- Test anonymous access, two separate clients, two practitioners, an expired practitioner, a suspended practitioner, two firms, a compliance officer and a super administrator.
-- Attempt IDOR/BOLA access by substituting matter, practitioner, disclosure, consultation and firm UUIDs.
-- Confirm no client can read another client's confidential details, no practitioner can enumerate undisclosed matters, and no firm member can access another firm's records.
-- Test credential approval/rejection/expiry, disclosure revocation, repeated acceptance and concurrent consultation requests.
-- Verify that all privileged state changes create the expected audit event.
-- Only promote after successful automated tests, review of the migration diff and a documented rollback/recovery plan.
+## Separate application and operational release gates
 
-## Separate application and operational gates
+- Rate limiting and abuse detection for registration, enquiries, messages and invitations.
+- Private evidence storage, per-matter authorization, content validation, malware scanning and short-lived signed downloads. The current application does not have an enabled document-upload/scanning flow.
+- Independent RLS adversarial testing and penetration testing.
+- Backup/restore exercises, monitoring, incident response and encryption-key rotation.
+- POPIA impact assessment, retention/deletion processes, operator agreements and South African legal/professional-conduct review.
 
-This migration does not solve application-side or operational requirements that still need separate work:
-
-- Rate limits and abuse detection for account creation, enquiries, messages and invitations.
-- Private evidence storage with strict per-matter policies, server-side content inspection, malware scanning and short-lived signed downloads. The current product must not imply that document upload is enabled.
-- Independent penetration testing and a full RLS adversarial test suite.
-- Backup/restore exercises, monitoring, incident response and credential-key rotation.
-- POPIA privacy-impact assessment, retention/deletion processes, and South African legal/professional-conduct review.
-
-**Release rule:** do not accept real legal matters or represent JusticeConnect as production-secure until the database gates and independent operational reviews above are complete.
+**Release rule:** do not accept real legal matters or represent JusticeConnect as production-secure until the database and independent operational gates are complete.
