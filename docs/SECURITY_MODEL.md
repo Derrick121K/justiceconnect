@@ -15,6 +15,9 @@ Account identity, practitioner registration numbers, client matter summaries, co
 - AES-256-GCM credential-number encryption; key stored only in server environment.
 - No public storage bucket for legal matter files.
 - Security response headers; `poweredByHeader` disabled.
+- Server Actions reject non-text form values, validate UUID/date/email formats and bound high-risk text fields before database calls.
+- Server Actions return generic failure messages rather than forwarding raw Supabase/Auth error details to the browser.
+- CI checks dependency advisories, static invariants, type safety, lint, unit tests, Playwright tests and production builds; CodeQL runs on changes and weekly, with action dependencies SHA-pinned.
 
 ## Threats to test
 
@@ -37,3 +40,18 @@ Account identity, practitioner registration numbers, client matter summaries, co
 - Automated credential re-checks and expiry notifications.
 - Privacy impact assessment, operator agreements and retention/deletion runbooks.
 - Backup/restore drill and security incident tabletop exercise.
+
+
+## Database hardening still required
+
+The checked-in migrations include a private current-credential helper used by public practitioner discovery. It must also be enforced by every workflow that creates or consumes practitioner opportunities: candidate matching, client disclosure, practitioner interest, client acceptance and consultation requests. Credential review must reject records without encrypted registration data, and status/expiry changes must immediately remove practitioners from all public and transactional eligibility paths.
+
+Consultation conflict checks must be made concurrency-safe. The current read-then-insert check can race when two requests are submitted at nearly the same time. Use a per-practitioner transaction lock or a tested exclusion constraint, then prove the behaviour with concurrent integration tests.
+
+These are database migration tasks, not application-only fixes. The linked JusticeConnect Supabase project was reported as `INACTIVE` on 2026-11-27. No live schema change has been run from this branch. Track the required work in [PENDING_DATABASE_HARDENING.md](./PENDING_DATABASE_HARDENING.md), restore/verify the dedicated project, generate a migration with the Supabase CLI, test on a disposable database or Supabase development branch, and run security/performance advisors before promoting it.
+
+## Important launch blockers
+
+- Repository CI configuration is new and must complete successfully on the pull request before merge.
+- No independent RLS adversarial test suite or penetration test has been completed by this branch.
+- Rate limiting, abuse detection, secure document storage/scanning, backups/restore drills, monitoring and the POPIA/professional-conduct review remain launch prerequisites.
