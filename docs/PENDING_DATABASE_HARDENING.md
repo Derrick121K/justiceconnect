@@ -25,7 +25,7 @@ The live `pg_catalog.pg_policies` definitions show that four firm workspace poli
 
 The branch policies currently contain the tautology `fm.firm_id = fm.firm_id`. The firm profile policy compares `fm.firm_id = fm.id`, which incorrectly blocks legitimate administration. The branch predicate can allow an administrator of one firm to mutate branches belonging to another firm.
 
-Migration `20261127122425_firm_workspace_rls_scope_hardening.sql` corrected the four policy predicates. The live `pg_catalog.pg_policies` verification passed with no exceptions. Still required: two-firm/two-admin integration tests, including branch INSERT/UPDATE/DELETE and firm-profile UPDATE attempts against another firm's IDs.
+Migration `20261127122425_firm_workspace_rls_scope_hardening.sql` corrected the four policy predicates. The live `pg_catalog.pg_policies` verification passed with no exceptions. A rollback-only live adversarial test was executed on 2026-11-27 using two temporary users and two firms. Firm A was denied Firm B branch INSERT/UPDATE/DELETE and Firm B profile UPDATE; Firm A's own branch INSERT/UPDATE/DELETE and profile UPDATE succeeded. The transaction was rolled back and a follow-up count confirmed zero test users, profiles, firms, memberships or branches remain. This validates the four corrected policies in the tested paths; broader RLS tests for other platform tables and UUID substitution remain outstanding.
 
 ## Other live advisor findings
 
@@ -61,7 +61,7 @@ Remaining schema changes must be generated with the Supabase CLI and tested on a
 - Approve the quoted development-branch cost, create that branch and test only there.
 - Run Supabase security, performance and health advisors; resolve or document every finding.
 - Test anonymous users, multiple clients/practitioners, expired/rejected credentials, inactive/suspended profiles, separate firms, compliance and super-admin roles.
-- Test IDOR/BOLA UUID substitution for matters, practitioners, disclosures, consultations, firms and branch records. Verify that an administrator of Firm A cannot create, edit or delete a branch under Firm B, and cannot edit Firm B's profile.
+- Test IDOR/BOLA UUID substitution for matters, practitioners, disclosures and consultations. The two-firm cross-tenant branch/profile write test passed in a rolled-back live transaction; expand adversarial testing to other firm resources, invitations, subscriptions and read paths.
 - Test disclosure revocation, matter closure, repeated acceptance and concurrent consultation requests.
 - Verify audit events, migration history and recovery strategy before production promotion.
 
