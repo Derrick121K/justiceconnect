@@ -7,6 +7,7 @@ const required = [
   "src/app/actions.ts",
   "src/app/dashboard/page.tsx",
   "src/app/dashboard/opportunities/page.tsx",
+  "src/app/professionals/credentials/page.tsx",
   "src/app/admin/page.tsx",
   "src/lib/supabase/server.ts",
   "src/lib/form-data.ts",
@@ -15,8 +16,10 @@ const required = [
   "supabase/migrations/20261127122425_firm_workspace_rls_scope_hardening.sql",
   "supabase/migrations/20261127122930_practitioner_eligibility_and_consultation_lock.sql",
   "supabase/migrations/20261127123216_citext_and_postgis_function_privilege_hardening.sql",
+  "supabase/migrations/20261127124500_ffc_credential_review_and_expiry_rules.sql",
   "tests/firm-policy-regression.test.ts",
   "tests/practitioner-eligibility-regression.test.ts",
+  "tests/ffc-credential-review.test.ts",
   "supabase/verification/firm_workspace_rls_policy_check.sql",
 ];
 const failures = [];
@@ -119,6 +122,25 @@ const firmPolicyVerification = await readFile(
 );
 if (!firmPolicyVerification.includes("pg_catalog.pg_policies")) {
   failures.push("Missing live catalog verification for firm workspace RLS policies.");
+}
+
+const credentialsPage = await readFile(
+  path.join(root, "src/app/professionals/credentials/page.tsx"),
+  "utf8",
+);
+if (!credentialsPage.includes('value="ffc"') || !credentialsPage.includes("currentSouthAfricanDate")) {
+  failures.push("Credential form must expose FFC separately and use the South African date for expiry.");
+}
+const dashboardPage = await readFile(
+  path.join(root, "src/app/dashboard/page.tsx"),
+  "utf8",
+);
+if (
+  !dashboardPage.includes("Profile review:") ||
+  !dashboardPage.includes("Credential submissions") ||
+  !dashboardPage.includes("Expired — replacement required")
+) {
+  failures.push("Dashboard must distinguish profile approval from credential review and show expired documents.");
 }
 
 const actionsFile = await readFile(path.join(root, "src/app/actions.ts"), "utf8");
