@@ -64,7 +64,7 @@ Keep `.env.local`, all encryption keys and service-role credentials out of Git. 
 
 Create a new, dedicated Supabase project for JusticeConnect. Do not reuse the database of another JMSE application.
 
-Apply the timestamped SQL files in `supabase/migrations/` in ascending filename order, exactly once, against a dedicated JusticeConnect database. The repository currently contains 21 timestamped migrations. For an existing project, inspect `supabase migration list` and the Supabase migration ledger first; do not replay migrations already recorded as applied. The ledger below records the 21 migrations applied to the existing JusticeConnect project. A fresh database must receive the complete ordered migration set, followed by a separate validation pass.
+Apply the timestamped SQL files in `supabase/migrations/` in ascending filename order, exactly once, against a dedicated JusticeConnect database. The repository currently contains 22 timestamped migrations. For an existing project, inspect `supabase migration list` and the Supabase migration ledger first; do not replay migrations already recorded as applied. The ledger below records the 22 migrations applied to the existing JusticeConnect project. A fresh database must receive the complete ordered migration set, followed by a separate validation pass.
 
 For a linked project, install the Supabase CLI, run `supabase login`, `supabase link --project-ref YOUR_PROJECT_REF`, inspect the pending migration list, then inspect the pending migration plan and run `supabase db push` only after confirming the linked project reference, reviewing the migration diff, and ensuring a recoverable backup exists. Do not apply migrations to production from an unreviewed local checkout. After migrations, execute `supabase/bootstrap_admin.sql` in the SQL editor after replacing the placeholder with the confirmed owner's account email. This grants the first `super_admin` role. Treat that SQL as privileged break-glass setup and do not expose it in a public route.
 
@@ -149,5 +149,6 @@ The following files match the migration versions recorded in the JusticeConnect 
 - `20261127122930_practitioner_eligibility_and_consultation_lock.sql`
 - `20261127123216_citext_and_postgis_function_privilege_hardening.sql`
 - `20261127172902_ffc_credential_review_and_expiry_rules.sql`
+- `20261127173151_south_africa_credential_expiry_timezone.sql`
 
 <!-- JUSTICECONNECT_SUPABASE_MIGRATIONS_END -->
