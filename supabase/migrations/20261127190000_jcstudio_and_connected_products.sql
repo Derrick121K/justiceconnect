@@ -158,34 +158,22 @@ as $$
   select auth.uid() is not null
     and exists (select 1 from public.profiles account where account.id = auth.uid() and account.status = 'active')
     and exists (
-    select 1 from public.practice_matters m
-    where m.id = target_matter and (
-      (m.firm_id is null and (m.created_by = auth.uid() or m.responsible_user_id = auth.uid()))
-      or (
-        m.firm_id is not null
-        and exists (
+      select 1 from public.practice_matters m
+      where m.id = target_matter and (
+        exists (
+          select 1 from public.practice_matter_members mm
+          where mm.matter_id = m.id and mm.user_id = auth.uid() and mm.active
+            and mm.permission in ('read','edit','manage')
+        )
+        or (m.firm_id is not null and exists (
           select 1 from public.firm_members fm
-          where fm.firm_id = m.firm_id and fm.user_id = auth.uid() and fm.status = 'active'
-            and exists (select 1 from public.law_firms f where f.id = fm.firm_id and f.status = 'active' and f.verification_status = 'verified')
-        )
-        and (
-          m.created_by = auth.uid()
-          or m.responsible_user_id = auth.uid()
-          or exists (
-            select 1 from public.practice_matter_members mm
-            where mm.matter_id = m.id and mm.user_id = auth.uid() and mm.active
-              and mm.permission in ('read','edit','manage')
-          )
-          or exists (
-            select 1 from public.firm_members fm
-            where fm.firm_id = m.firm_id and fm.user_id = auth.uid()
-              and fm.status = 'active' and fm.firm_role in ('owner','administrator')
-              and exists (select 1 from public.law_firms f where f.id = fm.firm_id and f.status = 'active' and f.verification_status = 'verified')
-          )
-        )
+          join public.law_firms f on f.id = fm.firm_id
+          where fm.firm_id = m.firm_id and fm.user_id = auth.uid()
+            and fm.status = 'active' and fm.firm_role in ('owner','administrator')
+            and f.status = 'active' and f.verification_status = 'verified'
+        ))
       )
-    )
-  );
+    );
 $$;
 
 create or replace function private.can_edit_practice_matter(target_matter uuid)
@@ -194,34 +182,22 @@ as $$
   select auth.uid() is not null
     and exists (select 1 from public.profiles account where account.id = auth.uid() and account.status = 'active')
     and exists (
-    select 1 from public.practice_matters m
-    where m.id = target_matter and (
-      (m.firm_id is null and (m.created_by = auth.uid() or m.responsible_user_id = auth.uid()))
-      or (
-        m.firm_id is not null
-        and exists (
+      select 1 from public.practice_matters m
+      where m.id = target_matter and (
+        exists (
+          select 1 from public.practice_matter_members mm
+          where mm.matter_id = m.id and mm.user_id = auth.uid() and mm.active
+            and mm.permission in ('edit','manage')
+        )
+        or (m.firm_id is not null and exists (
           select 1 from public.firm_members fm
-          where fm.firm_id = m.firm_id and fm.user_id = auth.uid() and fm.status = 'active'
-            and exists (select 1 from public.law_firms f where f.id = fm.firm_id and f.status = 'active' and f.verification_status = 'verified')
-        )
-        and (
-          m.created_by = auth.uid()
-          or m.responsible_user_id = auth.uid()
-          or exists (
-            select 1 from public.practice_matter_members mm
-            where mm.matter_id = m.id and mm.user_id = auth.uid()
-              and mm.active and mm.permission in ('edit','manage')
-          )
-          or exists (
-            select 1 from public.firm_members fm
-            where fm.firm_id = m.firm_id and fm.user_id = auth.uid()
-              and fm.status = 'active' and fm.firm_role in ('owner','administrator')
-              and exists (select 1 from public.law_firms f where f.id = fm.firm_id and f.status = 'active' and f.verification_status = 'verified')
-          )
-        )
+          join public.law_firms f on f.id = fm.firm_id
+          where fm.firm_id = m.firm_id and fm.user_id = auth.uid()
+            and fm.status = 'active' and fm.firm_role in ('owner','administrator')
+            and f.status = 'active' and f.verification_status = 'verified'
+        ))
       )
-    )
-  );
+    );
 $$;
 
 create or replace function private.can_manage_practice_matter(target_matter uuid)
@@ -230,40 +206,22 @@ as $$
   select auth.uid() is not null
     and exists (select 1 from public.profiles account where account.id = auth.uid() and account.status = 'active')
     and exists (
-    select 1 from public.practice_matters m
-    where m.id = target_matter and (
-      (m.firm_id is null and (
-        m.created_by = auth.uid()
-        or exists (
+      select 1 from public.practice_matters m
+      where m.id = target_matter and (
+        exists (
           select 1 from public.practice_matter_members mm
-          where mm.matter_id = m.id and mm.user_id = auth.uid()
-            and mm.active and mm.permission = 'manage'
+          where mm.matter_id = m.id and mm.user_id = auth.uid() and mm.active
+            and mm.permission = 'manage'
         )
-      ))
-      or (
-        m.firm_id is not null
-        and exists (
+        or (m.firm_id is not null and exists (
           select 1 from public.firm_members fm
-          where fm.firm_id = m.firm_id and fm.user_id = auth.uid() and fm.status = 'active'
-            and exists (select 1 from public.law_firms f where f.id = fm.firm_id and f.status = 'active' and f.verification_status = 'verified')
-        )
-        and (
-          exists (
-            select 1 from public.firm_members fm
-            where fm.firm_id = m.firm_id and fm.user_id = auth.uid()
-              and fm.status = 'active' and fm.firm_role in ('owner','administrator')
-              and exists (select 1 from public.law_firms f where f.id = fm.firm_id and f.status = 'active' and f.verification_status = 'verified')
-          )
-          or m.created_by = auth.uid()
-          or exists (
-            select 1 from public.practice_matter_members mm
-            where mm.matter_id = m.id and mm.user_id = auth.uid()
-              and mm.active and mm.permission = 'manage'
-          )
-        )
+          join public.law_firms f on f.id = fm.firm_id
+          where fm.firm_id = m.firm_id and fm.user_id = auth.uid()
+            and fm.status = 'active' and fm.firm_role in ('owner','administrator')
+            and f.status = 'active' and f.verification_status = 'verified'
+        ))
       )
-    )
-  );
+    );
 $$;
 
 create or replace function private.can_bill_practice_matter(target_matter uuid)
@@ -272,36 +230,25 @@ as $$
   select auth.uid() is not null
     and exists (select 1 from public.profiles account where account.id = auth.uid() and account.status = 'active')
     and exists (
-    select 1 from public.practice_matters m
-    where m.id = target_matter and (
-      (m.firm_id is null and (
-        m.created_by = auth.uid() or m.responsible_user_id = auth.uid()
-      ))
-      or (
-        m.firm_id is not null
-        and exists (
+      select 1 from public.practice_matters m
+      where m.id = target_matter and (
+        exists (
+          select 1 from public.practice_matter_members mm
+          where mm.matter_id = m.id and mm.user_id = auth.uid() and mm.active
+            and (
+              mm.permission in ('billing','manage')
+              or (m.responsible_user_id = auth.uid() and mm.permission = 'edit')
+            )
+        )
+        or (m.firm_id is not null and exists (
           select 1 from public.firm_members fm
-          where fm.firm_id = m.firm_id and fm.user_id = auth.uid() and fm.status = 'active'
-            and exists (select 1 from public.law_firms f where f.id = fm.firm_id and f.status = 'active' and f.verification_status = 'verified')
-        )
-        and (
-          m.created_by = auth.uid()
-          or m.responsible_user_id = auth.uid()
-          or exists (
-            select 1 from public.practice_matter_members mm
-            where mm.matter_id = m.id and mm.user_id = auth.uid()
-              and mm.active and mm.permission in ('billing','manage')
-          )
-          or exists (
-            select 1 from public.firm_members fm
-            where fm.firm_id = m.firm_id and fm.user_id = auth.uid()
-              and fm.status = 'active' and fm.firm_role in ('owner','administrator')
-              and exists (select 1 from public.law_firms f where f.id = fm.firm_id and f.status = 'active' and f.verification_status = 'verified')
-          )
-        )
+          join public.law_firms f on f.id = fm.firm_id
+          where fm.firm_id = m.firm_id and fm.user_id = auth.uid()
+            and fm.status = 'active' and fm.firm_role in ('owner','administrator')
+            and f.status = 'active' and f.verification_status = 'verified'
+        ))
       )
-    )
-  );
+    );
 $$;
 
 revoke all on function private.can_access_practice_matter(uuid) from public, anon;
@@ -388,6 +335,44 @@ create trigger practice_invoices_audit after insert or update on public.practice
 for each row execute function private.audit_practice_change();
 create trigger practice_invoice_items_audit after insert or update or delete on public.practice_invoice_items
 for each row execute function private.audit_practice_change();
+
+create or replace function private.revoke_practice_matter_access_for_firm_change()
+returns trigger language plpgsql security definer set search_path = ''
+as $
+declare target_firm uuid; target_user uuid;
+begin
+  if tg_table_name = 'firm_members' then
+    target_firm := old.firm_id;
+    target_user := old.user_id;
+    if tg_op = 'UPDATE' and new.status = 'active' then
+      return new;
+    end if;
+    update public.practice_matter_members mm
+      set active = false
+      from public.practice_matters m
+      where m.id = mm.matter_id and m.firm_id = target_firm
+        and mm.user_id = target_user and mm.active;
+  elsif tg_table_name = 'law_firms' then
+    target_firm := old.id;
+    if tg_op = 'UPDATE' and new.status = 'active' and new.verification_status = 'verified' then
+      return new;
+    end if;
+    update public.practice_matter_members mm
+      set active = false
+      from public.practice_matters m
+      where m.id = mm.matter_id and m.firm_id = target_firm and mm.active;
+  end if;
+  if tg_op = 'DELETE' then return old; end if;
+  return new;
+end;
+$;
+revoke all on function private.revoke_practice_matter_access_for_firm_change() from public, anon, authenticated;
+create trigger firm_members_revoke_practice_access
+  after update of status or delete on public.firm_members
+  for each row execute function private.revoke_practice_matter_access_for_firm_change();
+create trigger law_firms_revoke_practice_access
+  after update of status, verification_status on public.law_firms
+  for each row execute function private.revoke_practice_matter_access_for_firm_change();
 
 create or replace function public.list_qualified_firm_practitioners(target_firm uuid)
 returns table(user_id uuid, display_name text)
@@ -597,7 +582,7 @@ alter table public.practice_invoice_items enable row level security;
 revoke all on public.practice_matters, public.practice_matter_members, public.practice_matter_notes,
   public.practice_tasks, public.practice_events, public.practice_time_entries,
   public.practice_documents, public.practice_invoices, public.practice_invoice_items from public, anon;
-grant select, update on public.practice_matters to authenticated;
+grant select on public.practice_matters to authenticated;
 grant select, insert, update, delete on public.practice_matter_members to authenticated;
 grant select, insert, update, delete on public.practice_matter_notes, public.practice_tasks,
   public.practice_events, public.practice_time_entries to authenticated;
@@ -610,10 +595,6 @@ grant all on public.practice_matters, public.practice_matter_members, public.pra
 
 create policy "studio members read matters" on public.practice_matters
   for select to authenticated using (private.can_access_practice_matter(id));
-create policy "studio editors update matters" on public.practice_matters
-  for update to authenticated using (private.can_edit_practice_matter(id))
-  with check (private.can_edit_practice_matter(id));
-
 create policy "studio members read matter team" on public.practice_matter_members
   for select to authenticated using (private.can_access_practice_matter(matter_id));
 create policy "studio managers add matter team" on public.practice_matter_members

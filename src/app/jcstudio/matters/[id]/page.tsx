@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, CheckCircle2, FileText, Plus, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Plus, ShieldCheck } from "lucide-react";
 import { createPracticeNote, createPracticeTask, updatePracticeTask } from "@/app/jcstudio/actions";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";

@@ -1,6 +1,10 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { app, BrowserWindow, dialog, shell, session, ipcMain } = require("electron");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const fs = require("node:fs/promises");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require("node:path");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { URL } = require("node:url");
 
 let configuredUrl = "";

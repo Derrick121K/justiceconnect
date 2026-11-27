@@ -35,7 +35,7 @@ These are connected product areas, not independent accounts or separate database
 - **Compliance officer:** reviews evidence and makes practitioner, credential and firm verification decisions using the established Compliance Centre workflow.
 - **Super administrator:** system-level platform administration. Role assignment is a trusted, audited operation, never a client-side profile field.
 
-Postgres RLS is the enforcement boundary. The interface may hide unavailable controls, but UI state is not a security control. Matter ownership, tenant, source-mandate and client-link fields are immutable after creation. A responsible firm practitioner must be an active member of that firm.
+Postgres RLS is the enforcement boundary. The interface may hide unavailable controls, but UI state is not a security control. Matter ownership, tenant, source-mandate and client-link fields are immutable after creation. A responsible firm practitioner must be an active member of that firm. Matter membership assignments are the source of practitioner access; disabling a firm membership or suspending/de-verifying a firm also deactivates the member's Studio assignments. Re-activation does not silently restore an old assignment.
 
 ## JCStudio domain
 

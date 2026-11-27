@@ -37,6 +37,10 @@ describe("connected legal suite security boundaries", () => {
     expect(sql).toContain("private.can_bill_practice_matter");
     expect(sql).toContain("studio billing roles read invoices");
     expect(sql).toContain("studio members read internal notes");
+    expect(sql).toContain("firm_members_revoke_practice_access");
+    expect(sql).toContain("law_firms_revoke_practice_access");
+    expect(sql).toContain("grant select on public.practice_matters to authenticated;");
+    expect(sql).not.toContain('create policy "studio editors update matters"');
   });
 
   it("records auditable metadata without serialising matter note content", async () => {
