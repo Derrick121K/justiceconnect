@@ -19,6 +19,22 @@ export function isDateOnly(value: string): boolean {
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
+export function isDateOnOrAfter(value: string, minimumDate: string): boolean {
+  return isDateOnly(value) && isDateOnly(minimumDate) && value >= minimumDate;
+}
+
+export function currentSouthAfricanDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Johannesburg",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const part = (type: "year" | "month" | "day") =>
+    parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
 export function isSouthAfricanLocalDateTime(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) return false;
   return isDateOnly(value.slice(0, 10));
