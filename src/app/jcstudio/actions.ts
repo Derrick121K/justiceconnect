@@ -114,7 +114,7 @@ export async function createPracticeTask(form: FormData) {
   }
   const dueAt = dueDate ? new Date(`${dueDate}T15:00:00+02:00`).toISOString() : null;
   const { error } = await db.from("practice_tasks").insert({
-    matter_id: matterId, title, description: description || null, task_type, priority,
+    matter_id: matterId, title, description: description || null, task_type: taskType, priority,
     due_at: dueAt, created_by: user.id, assigned_to: user.id,
   });
   if (error) redirect(`/jcstudio/matters/${matterId}?error=${encodeURIComponent(SAFE_ACTION_ERROR)}`);
