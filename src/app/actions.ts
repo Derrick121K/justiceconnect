@@ -2,7 +2,14 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { SAFE_ACTION_ERROR, isDateOnly, isEmail, isSouthAfricanLocalDateTime, isUuid, readFormText } from "@/lib/form-data";
+import {
+  SAFE_ACTION_ERROR,
+  isDateOnly,
+  isEmail,
+  isSouthAfricanLocalDateTime,
+  isUuid,
+  readFormText,
+} from "@/lib/form-data";
 
 const value = readFormText;
 
@@ -290,7 +297,8 @@ export async function createFirmBranch(form: FormData) {
   const firmId = value(form, "firm_id");
   const name = value(form, "name");
   const placeId = value(form, "place_id") || null;
-  if (!isUuid(firmId) || name.length < 2 || name.length > 120 || (placeId !== null && !isUuid(placeId)) || value(form, "address_line").length > 300 || value(form, "phone").length > 40 || (value(form, "email") && !isEmail(value(form, "email")))) redirect(`/dashboard/firm/${firmId}?error=Enter%20a%20valid%20branch%20name`);
+  if (!isUuid(firmId)) redirect("/dashboard?error=Invalid%20firm");
+  if (name.length < 2 || name.length > 120 || (placeId !== null && !isUuid(placeId)) || value(form, "address_line").length > 300 || value(form, "phone").length > 40 || (value(form, "email") && !isEmail(value(form, "email")))) redirect(`/dashboard/firm/${firmId}?error=Enter%20a%20valid%20branch%20name`);
   const { error } = await supabase.from("firm_branches").insert({
     firm_id: firmId, name, address_line: value(form, "address_line") || null,
     place_id: placeId, phone: value(form, "phone") || null, email: value(form, "email") || null,
@@ -306,7 +314,8 @@ export async function inviteFirmMember(form: FormData) {
   const firmId = value(form, "firm_id");
   const email = value(form, "email").toLowerCase();
   const role = value(form, "firm_role");
-  if (!isUuid(firmId) || !isEmail(email) || !new Set(["administrator", "practitioner", "staff", "read_only"]).has(role)) redirect(`/dashboard/firm/${firmId}?error=Enter%20a%20valid%20email`);
+  if (!isUuid(firmId)) redirect("/dashboard?error=Invalid%20firm");
+  if (!isEmail(email) || !new Set(["administrator", "practitioner", "staff", "read_only"]).has(role)) redirect(`/dashboard/firm/${firmId}?error=Enter%20a%20valid%20email`);
   const { error } = await supabase.rpc("invite_firm_member", { target_firm: firmId, invite_email: email, requested_role: role });
   if (error) redirect(`/dashboard/firm/${firmId}?error=${encodeURIComponent(SAFE_ACTION_ERROR)}`);
   redirect(`/dashboard/firm/${firmId}?message=Invitation%20sent`);
