@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   SAFE_ACTION_ERROR,
-  isDateOnly,
+  currentSouthAfricanDate,
+  isDateOnOrAfter,
   isEmail,
   isSouthAfricanLocalDateTime,
   isUuid,
@@ -249,8 +250,22 @@ export async function submitCredential(form: FormData) {
   const issuer = value(form, "issuing_body");
   const expiresInput = value(form, "expires_at");
   const expires = expiresInput || null;
-  if (!/^[a-z0-9_-]{3,60}$/i.test(credentialType) || registration.length < 2 || registration.length > 100 || issuer.length < 2 || issuer.length > 160 || (expires !== null && !isDateOnly(expires))) {
-    redirect("/professionals/credentials?error=Enter%20valid%20credential%20details");
+  const allowedCredentialTypes = new Set([
+    "lpc_registration",
+    "candidate_registration",
+    "admission",
+    "ffc",
+  ]);
+  if (
+    !allowedCredentialTypes.has(credentialType) ||
+    registration.length < 2 ||
+    registration.length > 100 ||
+    issuer.length < 2 ||
+    issuer.length > 160 ||
+    (expires !== null && !isDateOnOrAfter(expires, currentSouthAfricanDate())) ||
+    (credentialType === "ffc" && expires === null)
+  ) {
+    redirect("/professionals/credentials?error=Use%20a%20supported%20credential%20and%20a%20current%20expiry%20date");
   }
   let encrypted: string;
   try { encrypted = encryptCredential(registration); }
