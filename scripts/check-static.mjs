@@ -12,6 +12,8 @@ const required = [
   "src/lib/form-data.ts",
   "proxy.ts",
   "supabase/bootstrap_admin.sql",
+  "supabase/patches/firm_workspace_rls_scope_hardening.sql",
+  "supabase/verification/firm_workspace_rls_policy_check.sql",
 ];
 const failures = [];
 
@@ -81,6 +83,38 @@ for (const table of [
   if (!explicitlyEnabled && !includedInRlsLoop) {
     failures.push(`No RLS enablement reference found for public.${table}.`);
   }
+}
+
+const firmPolicyPatch = await readFile(
+  path.join(root, "supabase/patches/firm_workspace_rls_scope_hardening.sql"),
+  "utf8",
+);
+for (const expected of [
+  "fm.firm_id = law_firms.id",
+  "fm.firm_id = firm_branches.firm_id",
+  "fm.user_id = (select auth.uid())",
+  "to authenticated",
+]) {
+  if (!firmPolicyPatch.toLowerCase().includes(expected)) {
+    failures.push(`Firm RLS hardening patch is missing required tenant scope: ${expected}`);
+  }
+}
+for (const unsafePredicate of [
+  /fm\\.firm_id\\s*=\\s*fm\\.firm_id/i,
+  /fm\\.firm_id\\s*=\\s*firm_id\\b/i,
+  /fm\\.firm_id\\s*=\\s*id\\b/i,
+]) {
+  if (unsafePredicate.test(firmPolicyPatch)) {
+    failures.push("Firm RLS hardening patch contains an unscoped membership predicate.");
+  }
+}
+
+const firmPolicyVerification = await readFile(
+  path.join(root, "supabase/verification/firm_workspace_rls_policy_check.sql"),
+  "utf8",
+);
+if (!firmPolicyVerification.includes("pg_catalog.pg_policies")) {
+  failures.push("Missing live catalog verification for firm workspace RLS policies.");
 }
 
 const actionsFile = await readFile(path.join(root, "src/app/actions.ts"), "utf8");
