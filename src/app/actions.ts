@@ -6,6 +6,7 @@ import {
   SAFE_ACTION_ERROR,
   currentSouthAfricanDate,
   isDateOnOrAfter,
+  isDateOnly,
   isEmail,
   isSouthAfricanLocalDateTime,
   isUuid,
