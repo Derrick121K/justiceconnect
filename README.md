@@ -146,4 +146,7 @@ The following files match the migration versions recorded in the JusticeConnect 
 - `20261110195939_rls_cycle_and_document_metadata_hardening.sql`
 - `20261110200109_security_definer_helpers_and_rpc_hardening.sql`
 - `20261127122425_firm_workspace_rls_scope_hardening.sql`
+- `20261127122930_practitioner_eligibility_and_consultation_lock.sql`
+- `20261127123216_citext_and_postgis_function_privilege_hardening.sql`
+- `20261127122425_firm_workspace_rls_scope_hardening.sql`
 <!-- JUSTICECONNECT_SUPABASE_MIGRATIONS_END -->
