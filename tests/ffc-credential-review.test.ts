@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 const migrationPath = new URL(
-  "../supabase/migrations/20261127124500_ffc_credential_review_and_expiry_rules.sql",
+  "../supabase/migrations/20261127172902_ffc_credential_review_and_expiry_rules.sql",
   import.meta.url,
 );
 const eligibilityMigrationPath = new URL(
