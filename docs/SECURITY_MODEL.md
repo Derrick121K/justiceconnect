@@ -44,12 +44,13 @@ Account identity, practitioner registration numbers, client matter summaries, co
 
 ## Database hardening status
 
-The live JusticeConnect Supabase project reports `ACTIVE_HEALTHY`. The 21-migration database ledger is reconciled with the repository. Four additional migrations were applied on 2026-11-27:
+The live JusticeConnect Supabase project reports `ACTIVE_HEALTHY`. The 22-migration database ledger is reconciled with the repository. Five additional migrations were applied on 2026-11-27:
 
 - `20261127122425_firm_workspace_rls_scope_hardening.sql` fixes four firm workspace RLS predicates so branch and firm profile writes are scoped to the correct tenant. A rollback-only two-firm test passed: cross-firm branch INSERT/UPDATE/DELETE and profile UPDATE were denied, while own-firm writes succeeded.
 - `20261127122930_practitioner_eligibility_and_consultation_lock.sql` rechecks active practitioner status and current qualifying credentials at workflow boundaries, prevents self-approval and incomplete credential approval, and serializes consultation overlap checks using a transaction-scoped practitioner lock.
 - `20261127123216_citext_and_postgis_function_privilege_hardening.sql` moved `citext` to `extensions`. PostGIS ACL restrictions did not take effect and remain unresolved.
 - `20261127172902_ffc_credential_review_and_expiry_rules.sql` permits separate review of an LPC-issued, encrypted FFC with its current annual expiry date. FFC does not replace proof of admission/enrolment; the private eligibility helper intentionally excludes FFC as the sole qualifying credential.
+- `20261127173151_south_africa_credential_expiry_timezone.sql` makes both eligibility and credential review compare expiry against the `Africa/Johannesburg` calendar date.
 
 The Supabase security advisor still flags PostGIS `public.spatial_ref_sys`. Three `st_estimatedextent` overloads remain executable by `anon` and `authenticated` despite an attempted ACL migration. Do not claim the PostGIS finding is resolved or use `DROP EXTENSION ... CASCADE`. Coordinate a supported change with Supabase Support after a verified backup.
 
