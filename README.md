@@ -91,7 +91,7 @@ npm run import:places
 
 A `package-lock.json` is committed. Use `npm ci` for reproducible dependency installation.
 
-Local verification completed successfully on the maintainer's Windows development environment:
+Historical baseline verification completed successfully on the maintainer's Windows development environment before the current production-readiness branch changes:
 
 - Vitest: 13 tests passed.
 - TypeScript: passed.
@@ -99,7 +99,7 @@ Local verification completed successfully on the maintainer's Windows developmen
 - Next.js 16.4.6 production build: passed.
 - npm security audit: zero reported vulnerabilities.
 
-These results do not replace Supabase integration testing, database RLS testing, end-to-end testing or independent security review. JusticeConnect must complete those checks before accepting real client matters.
+These historical results do not verify the changes on the current production-readiness branch. The branch CI workflow must rerun all checks and report success before merge. Historical checks also do not replace Supabase integration testing, database RLS testing, end-to-end testing or independent security review. JusticeConnect must complete those checks before accepting real client matters.
 
 ## Security and privacy model
 
