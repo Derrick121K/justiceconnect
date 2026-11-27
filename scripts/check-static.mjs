@@ -17,6 +17,7 @@ const required = [
   "supabase/migrations/20261127122930_practitioner_eligibility_and_consultation_lock.sql",
   "supabase/migrations/20261127123216_citext_and_postgis_function_privilege_hardening.sql",
   "supabase/migrations/20261127172902_ffc_credential_review_and_expiry_rules.sql",
+  "supabase/migrations/20261127173151_south_africa_credential_expiry_timezone.sql",
   "tests/firm-policy-regression.test.ts",
   "tests/practitioner-eligibility-regression.test.ts",
   "tests/ffc-credential-review.test.ts",
@@ -122,6 +123,14 @@ const firmPolicyVerification = await readFile(
 );
 if (!firmPolicyVerification.includes("pg_catalog.pg_policies")) {
   failures.push("Missing live catalog verification for firm workspace RLS policies.");
+}
+
+const expiryTimezoneMigration = await readFile(
+  path.join(root, "supabase/migrations/20261127173151_south_africa_credential_expiry_timezone.sql"),
+  "utf8",
+);
+if (!expiryTimezoneMigration.includes("Africa/Johannesburg")) {
+  failures.push("Credential expiry decisions must use the South African calendar date.");
 }
 
 const credentialsPage = await readFile(
