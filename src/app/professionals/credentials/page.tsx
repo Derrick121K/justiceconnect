@@ -113,7 +113,7 @@ export default async function CredentialsPage({
           Use the expiry date printed on the current document. FFCs are issued for a particular year and must be valid for the relevant period.
         </p>
         <div className="form-alert">
-          An FFC is a separate certificate for specified trust-account practices. It does not replace proof that you have been admitted and enrolled as a legal practitioner. Do not submit identity numbers, passwords or another person's registration details.
+          An FFC is a separate certificate for specified trust-account practices. It does not replace proof that you have been admitted and enrolled as a legal practitioner. Do not submit identity numbers, passwords or another person&apos;s registration details.
         </div>
         <button className="btn btn-navy">Submit credential securely</button>
       </form>
